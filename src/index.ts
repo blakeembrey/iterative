@@ -73,7 +73,7 @@ export function iter <T> (iterable: Iterable<T>): Iterator<T> {
 }
 
 /**
- * Get next iterator value, throw on `done`.
+ * Get next iterator value, throw when `done`.
  */
 export function next <T> (iterator: Iterator<T>): T {
   const item = iterator.next()
