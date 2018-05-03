@@ -230,6 +230,20 @@ describe('iterative', () => {
       expect(Array.from(a)).toEqual([])
       expect(Array.from(b)).toEqual([])
     })
+
+    it('should call `next` the right number of times', () => {
+      let i = 0
+      const next = jest.fn(() => ({ value: i++, done: i > 10 }))
+      const iterable: Iterable<number> = { [Symbol.iterator]: () => ({ next }) }
+
+      const [a, b] = iter.tee(iterable)
+
+      // Exhaust both iterables.
+      expect(Array.from(a)).toEqual(Array.from(iter.range(0, 10)))
+      expect(Array.from(b)).toEqual(Array.from(iter.range(0, 10)))
+
+      expect(next.mock.calls.length).toEqual(11)
+    })
   })
 
   describe('chunk', () => {
