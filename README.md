@@ -155,6 +155,14 @@ This function returns a list of tuples, where the `i`-th tuple contains the `i`-
 zip([1, 2, 3], ['a', 'b', 'c']) //=> [[1, 'a'], [2, 'b'], [3, 'c']]
 ```
 
+### `tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>]`
+
+Return two independent iterables from a single iterable.
+
+```ts
+tee([1, 2, 3]) //=> [[1, 2, 3], [1, 2, 3]]
+```
+
 ### `chunk<T>(iterable: Iterable<T>, size: number): Iterable<T[]>`
 
 Break iterable into lists of length `size`.

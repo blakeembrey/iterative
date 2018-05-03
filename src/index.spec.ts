@@ -200,7 +200,39 @@ describe('iterative', () => {
     })
   })
 
-  describe('chunked', () => {
+  describe('tee', () => {
+    it('should return two independent iterables from one', () => {
+      const iterable = iter.map([1, 2, 3], x => x * 2)
+      const [a, b] = iter.tee(iterable)
+
+      expect(Array.from(a)).toEqual([2, 4, 6])
+      expect(Array.from(b)).toEqual([2, 4, 6])
+    })
+
+    it('should read varying from cache to iterable', () => {
+      const iterable = iter.range(0, 5)
+      const [a, b] = iter.tee(iterable).map(iter.iter)
+
+      expect([a.next().value, a.next().value]).toEqual([0, 1])
+      expect([b.next().value, b.next().value, b.next().value]).toEqual([0, 1, 2])
+
+      expect([a.next().value, a.next().value]).toEqual([2, 3])
+      expect([b.next().value, b.next().value]).toEqual([3, 4])
+
+      expect(a.next().value).toEqual(4)
+      expect(b.next().value).toEqual(undefined)
+    })
+
+    it('should tee empty iterable', () => {
+      const iterable = iter.range(0, 0)
+      const [a, b] = iter.tee(iterable)
+
+      expect(Array.from(a)).toEqual([])
+      expect(Array.from(b)).toEqual([])
+    })
+  })
+
+  describe('chunk', () => {
     it('should chunk an iterable', () => {
       const iterable = iter.chunk([1, 2, 3, 4, 5, 6], 2)
 

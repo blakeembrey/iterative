@@ -299,6 +299,41 @@ export function * zip <T> (...iterables: Array<Iterable<T>>): Iterable<T[]> {
 }
 
 /**
+ * Return two independent iterables from a single iterable.
+ */
+export function tee <T> (iterable: Iterable<T>): [Iterable<T>, Iterable<T>] {
+  const queue: T[] = []
+  const it = iter(iterable)
+  let owner: -1 | 0 | 1
+
+  function * gen (id: 0 | 1): Iterable<T> {
+    while (true) {
+      while (queue.length) {
+        yield queue.shift()!
+      }
+
+      if (owner === -1) return
+
+      let item: IteratorResult<T>
+
+      while (item = it.next()) {
+        if (item.done) {
+          owner = -1
+          return
+        }
+
+        owner = id
+        queue.push(item.value)
+        yield item.value
+        if (id !== owner) break
+      }
+    }
+  }
+
+  return [gen(0), gen(1)]
+}
+
+/**
  * Break iterable into lists of length `size`.
  */
 export function * chunk <T> (iterable: Iterable<T>, size: number): Iterable<T[]> {
