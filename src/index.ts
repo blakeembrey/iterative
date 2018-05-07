@@ -75,9 +75,14 @@ export function iter <T> (iterable: Iterable<T>): Iterator<T> {
 /**
  * Get next iterator value, throw when `done`.
  */
-export function next <T> (iterator: Iterator<T>): T {
+export function next <T> (iterator: Iterator<T>): T
+export function next <T, U> (iterator: Iterator<T>, defaultValue: U): T | U
+export function next <T, U> (iterator: Iterator<T>, defaultValue?: U): T | U {
   const item = iterator.next()
-  if (item.done) throw new StopIteration()
+  if (item.done) {
+    if (arguments.length === 1) throw new StopIteration()
+    return defaultValue as U
+  }
   return item.value
 }
 
