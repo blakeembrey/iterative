@@ -71,11 +71,31 @@ describe('iterative', () => {
     })
   })
 
+  describe('flatten', () => {
+    it('should flatten an iterable of iterables', () => {
+      const iterable = iter.slice(
+        iter.flatten(iter.map(iter.range(), stop => iter.range(0, stop))),
+        10,
+        20
+      )
+
+      expect(Array.from(iterable)).toEqual([0, 1, 2, 3, 4, 0, 1, 2, 3, 4])
+    })
+  })
+
   describe('chain', () => {
     it('should chain together iterables', () => {
       const iterable = iter.chain(iter.range(0, 5), iter.range(0, 5))
 
       expect(Array.from(iterable)).toEqual([0, 1, 2, 3, 4, 0, 1, 2, 3, 4])
+    })
+
+    it('should allow flat map', () => {
+      const iterable = iter.chain(
+        ...iter.map(iter.range(0, 5), stop => iter.range(0, stop))
+      )
+
+      expect(Array.from(iterable)).toEqual([0, 0, 1, 0, 1, 2, 0, 1, 2, 3])
     })
   })
 

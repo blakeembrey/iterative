@@ -100,16 +100,23 @@ export function * accumulate <T, U> (iterable: Iterable<T>, func: Reducer<T, T>)
 }
 
 /**
+ * Return an iterator flattening one level of nesting in an iterable of iterables.
+ */
+export function * flatten <T> (iterable: Iterable<Iterable<T>>): Iterable<T> {
+  for (const it of iterable) {
+    for (const item of it) {
+      yield item
+    }
+  }
+}
+
+/**
  * Make an iterator that returns elements from the first iterable until it is
  * exhausted, then proceeds to the next iterable, until all of the iterables are
  * exhausted. Used for treating consecutive sequences as a single sequence.
  */
-export function * chain <T> (...iterables: Array<Iterable<T>>): Iterable<T> {
-  for (const iterable of iterables) {
-    for (const item of iterable) {
-      yield item
-    }
-  }
+export function chain <T> (...iterables: Array<Iterable<T>>): Iterable<T> {
+  return flatten(iterables)
 }
 
 /**

@@ -42,6 +42,14 @@ Make an iterator that repeats `value` over and over again.
 repeat(true) //=> [true, true, true, true, ...]
 ```
 
+### `flatten<T>(iterable: Iterable<Iterable<T>>): Iterable<T>`
+
+Return an iterator flattening one level of nesting in an iterable of iterables.
+
+```ts
+flatten([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) //=> [1, 2, 3, 4, 5, 6, 7, 8, 9]
+```
+
 ### `chain<T>(...iterables: Array<Iterable<T>>): Iterable<T>`
 
 Make an iterator that returns elements from the first iterable until it is exhausted, then proceeds to the next iterable, until all of the iterables are exhausted. Used for treating consecutive sequences as a single sequence.
