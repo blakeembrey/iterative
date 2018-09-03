@@ -391,3 +391,12 @@ export function * compress <T> (data: Iterable<T>, selectors: Iterable<boolean>)
     if (valid) yield item
   }
 }
+
+/**
+ * Return a new sorted list from the items in iterable.
+ */
+export function sorted <T> (data: Iterable<T>, key: MapFunc <T, string | number>, reverse = false): Array<T> {
+  const dir = reverse ? -1 : 1
+  const array = Array.from<T, [number | string, T]>(data, item => [key(item), item])
+  return array.sort((a, b) => a[0] > b[0] ? dir : (a[0] < b[0] ? -dir : 0)).map(x => x[1])
+}

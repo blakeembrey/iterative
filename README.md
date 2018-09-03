@@ -195,6 +195,12 @@ Make an iterator that filters elements from `data` returning only those that hav
 compress([1, 2, 3, 4, 5], [true, false, true, false, true]) //=> [1, 3, 5]
 ```
 
+### `sorted<T>(data: Iterable<T>, key: MapFunc<T, string | number>, reverse?: boolean)`
+
+```ts
+sorted(slice(range(), 0, 10), x => x)
+```
+
 ## Reference
 
 * [Itertools Recipes](https://docs.python.org/3/library/itertools.html#itertools-recipes)

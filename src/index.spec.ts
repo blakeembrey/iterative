@@ -315,4 +315,18 @@ describe('iterative', () => {
       expect(Array.from(iterable)).toEqual([0, 2])
     })
   })
+
+  describe('sorted', () => {
+    it('should return a sorted list', () => {
+      const list = iter.sorted(iter.slice(iter.cycle([1, 2, 3]), 0, 10), x => x)
+
+      expect(list).toEqual([1, 1, 1, 1, 2, 2, 2, 3, 3, 3])
+    })
+
+    it('should return list in reverse order', () => {
+      const list = iter.sorted(iter.slice(iter.range(), 0, 10), x => x, true)
+
+      expect(list).toEqual([9, 8, 7, 6, 5, 4, 3, 2, 1, 0])
+    })
+  })
 })
