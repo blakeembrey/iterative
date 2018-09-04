@@ -383,11 +383,11 @@ export function * pairwise <T> (iterable: Iterable<T>): Iterable<[T, T]> {
 }
 
 /**
- * Make an iterator that filters elements from `data` returning only those that
- * have a corresponding element in selectors that evaluates to `true`.
+ * Make an iterator that filters elements from `iterable` returning only those
+ * that have a corresponding element in selectors that evaluates to `true`.
  */
-export function * compress <T> (data: Iterable<T>, selectors: Iterable<boolean>): Iterable<T> {
-  for (const [item, valid] of zip(data, selectors)) {
+export function * compress <T> (iterable: Iterable<T>, selectors: Iterable<boolean>): Iterable<T> {
+  for (const [item, valid] of zip(iterable, selectors)) {
     if (valid) yield item
   }
 }
@@ -395,8 +395,8 @@ export function * compress <T> (data: Iterable<T>, selectors: Iterable<boolean>)
 /**
  * Return a new sorted list from the items in iterable.
  */
-export function sorted <T> (data: Iterable<T>, key: MapFunc <T, string | number>, reverse = false): Array<T> {
+export function sorted <T> (iterable: Iterable<T>, key: MapFunc <T, string | number>, reverse = false): Array<T> {
   const dir = reverse ? -1 : 1
-  const array = Array.from<T, [number | string, T]>(data, item => [key(item), item])
+  const array = Array.from<T, [number | string, T]>(iterable, item => [key(item), item])
   return array.sort((a, b) => a[0] > b[0] ? dir : (a[0] < b[0] ? -dir : 0)).map(x => x[1])
 }

@@ -187,15 +187,15 @@ Returns an iterator of paired items, overlapping, from the original. When the in
 pairwise(range(0, 5)) //=> [[0, 1], [1, 2], [2, 3], [3, 4]]
 ```
 
-### `compress<T>(data: Iterable<T>, selectors: Iterable<boolean>): Iterable<T>`
+### `compress<T>(iterable: Iterable<T>, selectors: Iterable<boolean>): Iterable<T>`
 
-Make an iterator that filters elements from `data` returning only those that have a corresponding element in selectors that evaluates to `true`.
+Make an iterator that filters elements from `iterable` returning only those that have a corresponding element in selectors that evaluates to `true`.
 
 ```ts
 compress([1, 2, 3, 4, 5], [true, false, true, false, true]) //=> [1, 3, 5]
 ```
 
-### `sorted<T>(data: Iterable<T>, key: MapFunc<T, string | number>, reverse?: boolean)`
+### `sorted<T>(iterable: Iterable<T>, key: MapFunc<T, string | number>, reverse?: boolean)`
 
 ```ts
 sorted(slice(range(), 0, 10), x => x)
