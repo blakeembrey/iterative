@@ -89,7 +89,7 @@ export function next <T, U> (iterator: Iterator<T>, defaultValue?: U): T | U {
 /**
  * Make an iterator that returns accumulated results of binary functions.
  */
-export function * accumulate <T, U> (iterable: Iterable<T>, func: Reducer<T, T>): Iterable<T> {
+export function * accumulate <T> (iterable: Iterable<T>, func: Reducer<T, T>): Iterable<T> {
   const it = iter(iterable)
   let item = it.next()
   let total = item.value
