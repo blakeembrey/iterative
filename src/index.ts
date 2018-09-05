@@ -1,17 +1,12 @@
 /**
  * Predicate for filtering items.
  */
-export type Predicate <T, U extends T = T> = ((x: T) => x is U) | ((x: T) => boolean)
+export type Predicate <T, U extends T = T> = ((item: T) => item is U) | ((item: T) => boolean)
 
 /**
  * Reducer function.
  */
-export type Reducer <T, U> = (x: U, y: T) => U
-
-/**
- * Function for mapping items.
- */
-export type MapFunc <T, U> = (x: T) => U
+export type Reducer <T, U> = (result: U, item: T) => U
 
 /**
  * Throw when iterator is `done`.
@@ -194,7 +189,7 @@ export function * takeWhile <T> (iterable: Iterable<T>, predicate: Predicate<T>)
  * Make an iterator that returns consecutive keys and groups from the `iterable`.
  * The `func` is a function computing a key value for each element.
  */
-export function * groupBy <T, U> (iterable: Iterable<T>, func: MapFunc<T, U>): Iterable<[U, Iterable<T>]> {
+export function * groupBy <T, U> (iterable: Iterable<T>, func: (x: T) => U): Iterable<[U, Iterable<T>]> {
   const it = iter(iterable)
   let item = it.next()
 
@@ -272,7 +267,7 @@ export function reduce <T, U> (iterable: Iterable<T>, reducer: Reducer<T, T | U>
 /**
  * Apply function to every item of iterable and return an iterable of the results.
  */
-export function * map <T, U> (iterable: Iterable<T>, func: MapFunc<T, U>): Iterable<U> {
+export function * map <T, U> (iterable: Iterable<T>, func: (x: T) => U): Iterable<U> {
   for (const item of iterable) yield func(item)
 }
 
@@ -401,7 +396,7 @@ export function * compress <T> (iterable: Iterable<T>, selectors: Iterable<boole
 /**
  * Return a sorted array from the items in iterable.
  */
-export function sorted <T> (iterable: Iterable<T>, key: MapFunc <T, string | number>, reverse = false): Array<T> {
+export function sorted <T> (iterable: Iterable<T>, key: (x: T) => string | number, reverse = false): Array<T> {
   const dir = reverse ? -1 : 1
   const array = Array.from<T, [number | string, T]>(iterable, item => [key(item), item])
   return array.sort((a, b) => a[0] > b[0] ? dir : (a[0] < b[0] ? -dir : 0)).map(x => x[1])

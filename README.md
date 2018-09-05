@@ -67,7 +67,7 @@ slice([1, 2, 3, 4, 5]) //=> [1, 2, 3, 4, 5]
 slice(range(), 2, 5) //=> [2, 3, 4]
 ```
 
-### `map<T, U>(iterable: Iterable<T>, func: MapFunc<T, U>): Iterable<U>`
+### `map<T, U>(iterable: Iterable<T>, func: (x: T) => U): Iterable<U>`
 
 Apply function to every item of iterable and return an iterable of the results.
 
@@ -147,7 +147,7 @@ Make an iterator that returns elements from the iterable as long as the predicat
 takeWhile([1, 2, 3, 4, 5], x => x < 3) //=> [1, 2]
 ```
 
-### `groupBy<T, U>(iterable: Iterable<T>, func: MapFunc<T, U>): Iterable<[U, Iterable<T>]>`
+### `groupBy<T, U>(iterable: Iterable<T>, func: (x: T) => U): Iterable<[U, Iterable<T>]>`
 
 Make an iterator that returns consecutive keys and groups from the `iterable`. The `func` is a function computing a key value for each element.
 
@@ -203,7 +203,7 @@ Make an iterator that filters elements from `iterable` returning only those that
 compress([1, 2, 3, 4, 5], [true, false, true, false, true]) //=> [1, 3, 5]
 ```
 
-### `sorted<T>(iterable: Iterable<T>, key: MapFunc<T, string | number>, reverse?: boolean): T[]`
+### `sorted<T>(iterable: Iterable<T>, key: (x: T) => string | number, reverse?: boolean): T[]`
 
 Return a sorted array from the items in iterable.
 
