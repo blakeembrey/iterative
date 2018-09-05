@@ -328,6 +328,20 @@ describe('iterative', () => {
     })
   })
 
+  describe('zipLongest', () => {
+    it('should zip until the longest value', () => {
+      const iterable = iter.zipLongest(iter.range(0, 2), iter.range(0, 4))
+
+      expect(Array.from(iterable)).toEqual([[0, 0], [1, 1], [undefined, 2], [undefined, 3]])
+    })
+
+    it('should do nothing without iterables', () => {
+      const iterable = iter.zipLongest()
+
+      expect(Array.from(iterable)).toEqual([])
+    })
+  })
+
   describe('compress', () => {
     it('should compress an iterable based on boolean sequence', () => {
       const iterable = iter.compress(iter.range(), [true, false, true])

@@ -163,12 +163,20 @@ Returns an iterable of enumeration pairs.
 enumerate('test') //=> [[0, 't'], [1, 'e'], [2, 's'], [3, 't']]
 ```
 
-### `zip<T>(...iterables: Array<Iterable<T>>): Iterable<T[]>`
+### `zip<T>(...iterables: Iterable<T>[]): Iterable<T[]>`
 
-This function returns a list of tuples, where the `i`-th tuple contains the `i`-th element from each of the argument `iterables`.
+Returns an iterator of tuples, where the `i`-th tuple contains the `i`-th element from each of the argument sequences or iterables. The iterator stops when the shortest input iterable is exhausted.
 
 ```ts
 zip([1, 2, 3], ['a', 'b', 'c']) //=> [[1, 'a'], [2, 'b'], [3, 'c']]
+```
+
+### `zipLongest<T>(...iterables: Iterable<T>[]): Iterable<T[]>`
+
+Make an iterator that aggregates elements from each of the iterables. If the iterables are of uneven length, missing values are `undefined`. Iteration continues until the longest iterable is exhausted.
+
+```ts
+zipLongest([1, 2], ['a', 'b', 'c', 'd']) //=> [[1, 'a'], [2, 'b'], [undefined, 'c'], [undefined, 'd']]
 ```
 
 ### `tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>]`

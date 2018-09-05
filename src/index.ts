@@ -9,6 +9,16 @@ export type Predicate <T, U extends T = T> = ((item: T) => item is U) | ((item: 
 export type Reducer <T, U> = (result: U, item: T) => U
 
 /**
+ * List of values to list of iterable values.
+ */
+export type TupleIterable <T extends any[]> = { [K in keyof T]: Iterable<T[K]> }
+
+/**
+ * Iterpolate `undefined` with tuple values.
+ */
+export type TupleUndefined <T extends any[]> = { [K in keyof T]: T[K] | undefined }
+
+/**
  * Throw when iterator is `done`.
  */
 export class StopIteration extends Error {
@@ -292,10 +302,12 @@ export function * filter <T, U extends T> (iterable: Iterable<T>, func: Predicat
 }
 
 /**
- * This function returns a list of tuples, where the `i`-th tuple contains the
- * `i`-th element from each of the argument `iterables`.
+ * Make an iterator that aggregates elements from each of the iterables. Returns
+ * an iterator of tuples, where the `i`-th tuple contains the `i`-th element
+ * from each of the argument sequences or iterables. The iterator stops when the
+ * shortest input iterable is exhausted.
  */
-export function * zip <T extends any[]> (...iterables: { [K in keyof T]: Iterable<T[K]> }): Iterable<T> {
+export function * zip <T extends any[]> (...iterables: TupleIterable<T>): Iterable<T> {
   const iters = iterables.map(x => iter(x))
 
   while (iters.length) {
@@ -305,6 +317,31 @@ export function * zip <T extends any[]> (...iterables: { [K in keyof T]: Iterabl
       const item = iters[i].next()
       if (item.done) return
       result[i] = item.value
+    }
+
+    yield result
+  }
+}
+
+/**
+ * Make an iterator that aggregates elements from each of the iterables. If the
+ * iterables are of uneven length, missing values are `undefined`. Iteration
+ * continues until the longest iterable is exhausted.
+ */
+export function * zipLongest <T extends any[]> (...iterables: TupleIterable<T>): Iterable<TupleUndefined<T>> {
+  const iters = iterables.map(x => iter(x))
+  let counter = iters.length
+
+  while (counter > 0) {
+    const result = Array(iters.length) as TupleUndefined<T>
+
+    for (let i = 0; i < iters.length; i++) {
+      const item = iters[i].next()
+      if (item.done) {
+        counter -= 1
+      } else {
+        result[i] = item.value
+      }
     }
 
     yield result
