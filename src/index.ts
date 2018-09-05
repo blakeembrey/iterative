@@ -289,21 +289,16 @@ export function * filter <T, U extends T> (iterable: Iterable<T>, func: Predicat
  * This function returns a list of tuples, where the `i`-th tuple contains the
  * `i`-th element from each of the argument `iterables`.
  */
-export function zip <T1> (iter1: Iterable<T1>): Iterable<[T1]>
-export function zip <T1, T2> (iter1: Iterable<T1>, iter2: Iterable<T2>): Iterable<[T1, T2]>
-export function zip <T1, T2, T3> (iter1: Iterable<T1>, iter2: Iterable<T2>, iter3: Iterable<T3>): Iterable<[T1, T2, T3]>
-export function zip <T1, T2, T3, T4> (iter1: Iterable<T1>, iter2: Iterable<T2>, iter3: Iterable<T3>, iter4: Iterable<T4>): Iterable<[T1, T2, T3, T4]>
-export function zip <T1, T2, T3, T4, T5> (iter1: Iterable<T1>, iter2: Iterable<T2>, iter3: Iterable<T3>, iter4: Iterable<T4>, iter5: Iterable<T5>): Iterable<[T1, T2, T3, T4, T5]>
-export function * zip <T> (...iterables: Array<Iterable<T>>): Iterable<T[]> {
+export function * zip <T extends any[]> (...iterables: { [K in keyof T]: Iterable<T[K]> }): Iterable<T> {
   const iters = iterables.map(x => iter(x))
 
   while (true) {
-    const result: T[] = []
+    const result = Array(iters.length) as T
 
-    for (const iter of iters) {
-      const item = iter.next()
+    for (let i = 0; i < iters.length; i++) {
+      const item = iters[i].next()
       if (item.done) return
-      result.push(item.value)
+      result[i] = item.value
     }
 
     yield result
