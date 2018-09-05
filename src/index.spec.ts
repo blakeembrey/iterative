@@ -218,6 +218,12 @@ describe('iterative', () => {
 
       expect(Array.from(iterable)).toEqual([0, 2, 4, 6, 8])
     })
+
+    it('should filter with correct output type', () => {
+      const iterable = iter.filter(['a', 1, 'b', 2, 'c', 3], (x): x is string => typeof x === 'string')
+
+      expect(Array.from(iterable)).toEqual(['a', 'b', 'c'])
+    })
   })
 
   describe('tee', () => {
