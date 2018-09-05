@@ -212,6 +212,14 @@ describe('iterative', () => {
     })
   })
 
+  describe('spreadmap', () => {
+    it('should spread map iterator values', () => {
+      const iterable = iter.slice(iter.spreadmap(iter.zip(iter.range(), iter.range()), (a, b) => a + b), 0, 5)
+
+      expect(Array.from(iterable)).toEqual([0, 2, 4, 6, 8])
+    })
+  })
+
   describe('filter', () => {
     it('should filter values from iterator', () => {
       const iterable = iter.slice(iter.filter(iter.range(), x => x % 2 === 0), 0, 5)

@@ -75,6 +75,14 @@ Apply function to every item of iterable and return an iterable of the results.
 map([1, 2, 3], x => x * x) //=> [1, 4, 9]
 ```
 
+### `spreadmap<T, U>(iterable: Iterable<T>, func: (...args: T) => U): Iterable<U>`
+
+Make an iterator that computes the function using arguments obtained from the iterable. Used instead of `map()` when argument parameters are already grouped in tuples from a single iterable (the data has been "pre-zipped"). The difference between `map()` and `spreadmap()` parallels the distinction between `function(a, b)` and `function(...c)`.
+
+```ts
+map([[1, 2], [3, 4], [5, 6]], (a, b) => a + b) //=> [3, 7, 11]
+```
+
 ### `filter<T, U extends T>(iterable: Iterable<T>, func: Predicate<T, U> = Boolean): Iterable<U>`
 
 Construct an `iterator` from those elements of `iterable` for which `func` returns true.

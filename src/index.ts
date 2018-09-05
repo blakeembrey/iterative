@@ -277,6 +277,17 @@ export function * map <T, U> (iterable: Iterable<T>, func: MapFunc<T, U>): Itera
 }
 
 /**
+ * Make an iterator that computes the function using arguments obtained from the
+ * iterable. Used instead of `map()` when argument parameters are already
+ * grouped in tuples from a single iterable (the data has been "pre-zipped").
+ * The difference between `map()` and `spreadmap()` parallels the distinction
+ * between `function(a, b)` and `function(...c)`.
+ */
+export function * spreadmap <T extends any[], U> (iterable: Iterable<T>, func: (...args: T) => U): Iterable<U> {
+  for (const item of iterable) yield func(...item)
+}
+
+/**
  * Construct an `iterator` from those elements of `iterable` for which `func` returns true.
  */
 export function * filter <T, U extends T> (iterable: Iterable<T>, func: Predicate<T, U> = Boolean): Iterable<U> {
