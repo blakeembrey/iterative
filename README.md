@@ -195,7 +195,9 @@ Make an iterator that filters elements from `iterable` returning only those that
 compress([1, 2, 3, 4, 5], [true, false, true, false, true]) //=> [1, 3, 5]
 ```
 
-### `sorted<T>(iterable: Iterable<T>, key: MapFunc<T, string | number>, reverse?: boolean)`
+### `sorted<T>(iterable: Iterable<T>, key: MapFunc<T, string | number>, reverse?: boolean): T[]`
+
+Return a sorted array from the items in iterable.
 
 ```ts
 sorted(slice(range(), 0, 10), x => x)

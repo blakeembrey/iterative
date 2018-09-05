@@ -393,7 +393,7 @@ export function * compress <T> (iterable: Iterable<T>, selectors: Iterable<boole
 }
 
 /**
- * Return a new sorted list from the items in iterable.
+ * Return a sorted array from the items in iterable.
  */
 export function sorted <T> (iterable: Iterable<T>, key: MapFunc <T, string | number>, reverse = false): Array<T> {
   const dir = reverse ? -1 : 1
