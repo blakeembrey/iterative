@@ -400,3 +400,13 @@ export function sorted <T> (iterable: Iterable<T>, key: MapFunc <T, string | num
   const array = Array.from<T, [number | string, T]>(iterable, item => [key(item), item])
   return array.sort((a, b) => a[0] > b[0] ? dir : (a[0] < b[0] ? -dir : 0)).map(x => x[1])
 }
+
+/**
+ * Return an object from an iterable, i.e. `Array.from` for objects.
+ */
+export function dict <K extends string | number | symbol, V> (iterable: Iterable<[K, V]>): Record<K, V> {
+  return reduce(iterable, (obj, [key, value]) => {
+    obj[key] = value
+    return obj
+  }, Object.create(null))
+}

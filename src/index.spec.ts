@@ -329,4 +329,12 @@ describe('iterative', () => {
       expect(list).toEqual([9, 8, 7, 6, 5, 4, 3, 2, 1, 0])
     })
   })
+
+  describe('dict', () => {
+    it('should create an object from an iterable', () => {
+      const iterable = iter.zip(iter.range(1, 4), iter.repeat(true))
+
+      expect(iter.dict(iterable)).toEqual({ 1: true, 2: true, 3: true })
+    })
+  })
 })

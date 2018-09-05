@@ -201,6 +201,14 @@ compress([1, 2, 3, 4, 5], [true, false, true, false, true]) //=> [1, 3, 5]
 sorted(slice(range(), 0, 10), x => x)
 ```
 
+### `dict<K, V>(iterable: Iterable<[K, V]>): Record<K, V>`
+
+Return an object from an iterable, i.e. `Array.from` for objects.
+
+```ts
+dict(zip(range(0, 5), repeat(true))) //=> { 0: true, 1: true, 2: true, 3: true, 4: true }
+```
+
 ## Reference
 
 * [Itertools Recipes](https://docs.python.org/3/library/itertools.html#itertools-recipes)
