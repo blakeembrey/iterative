@@ -298,7 +298,7 @@ export function * filter <T, U extends T> (iterable: Iterable<T>, func: Predicat
 export function * zip <T extends any[]> (...iterables: { [K in keyof T]: Iterable<T[K]> }): Iterable<T> {
   const iters = iterables.map(x => iter(x))
 
-  while (true) {
+  while (iters.length) {
     const result = Array(iters.length) as T
 
     for (let i = 0; i < iters.length; i++) {

@@ -320,6 +320,12 @@ describe('iterative', () => {
 
       expect(Array.from(iterable)).toEqual([[1, 1], [2, 2], [3, 3]])
     })
+
+    it('should do nothing without iterables', () => {
+      const iterable = iter.zip()
+
+      expect(Array.from(iterable)).toEqual([])
+    })
   })
 
   describe('compress', () => {
