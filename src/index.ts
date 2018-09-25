@@ -464,3 +464,60 @@ export function dict <K extends string | number | symbol, V> (iterable: Iterable
     return obj
   }, Object.create(null))
 }
+
+/**
+ * Return the length (the number of items) of an iterable.
+ */
+export function len (iterable: Iterable<any>): number {
+  let length = 0
+  for (const _ of iterable) length++
+  return length
+}
+
+/**
+ * Return the smallest item in an iterable.
+ */
+export function min (iterable: Iterable<number>): number
+export function min <T> (iterable: Iterable<T>, keyFn: (x: T) => number): number
+export function min <T> (iterable: Iterable<T>, keyFn: (x: T) => number = x => x as any) {
+  let value = Infinity
+  let result = undefined
+
+  for (const item of iterable) {
+    const tmp = keyFn(item)
+    if (tmp < value) {
+      value = tmp
+      result = item
+    }
+  }
+
+  return result
+}
+
+/**
+ * Return the largest item in an iterable.
+ */
+export function max (iterable: Iterable<number>): number
+export function max <T> (iterable: Iterable<T>, keyFn: (x: T) => number): number
+export function max <T> (iterable: Iterable<T>, keyFn: (x: T) => number = x => x as any) {
+  let value = -Infinity
+  let result = undefined
+
+  for (const item of iterable) {
+    const tmp = keyFn(item)
+    if (tmp > value) {
+      value = tmp
+      result = item
+    }
+  }
+
+  return result
+}
+
+/**
+ * Sums `start` and the items of an `iterable` from left to right and returns
+ * the total.
+ */
+export function sum (iterable: Iterable<number>, start = 0): number {
+  return reduce(iterable, (x, y) => x + y, start)
+}

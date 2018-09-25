@@ -227,6 +227,40 @@ Return an object from an iterable, i.e. `Array.from` for objects.
 dict(zip(range(0, 5), repeat(true))) //=> { 0: true, 1: true, 2: true, 3: true, 4: true }
 ```
 
+### `len(iterable: Iterable<any>): number`
+
+Return the length (the number of items) of an iterable.
+
+```ts
+len(range(0, 5)) //=> 5
+```
+
+_Note:_ This method iterates over `iterable` to return the length.
+
+### `min<T>(iterable: Iterable<T>, key?: (x: T) => number): T`
+
+Return the smallest item in an iterable.
+
+```ts
+min([1, 2, 3, 4, 5]) //=> 1
+```
+
+### `max<T>(iterable: Iterable<T>, key?: (x: T) => number): T`
+
+Return the largest item in an iterable.
+
+```ts
+max([1, 2, 3, 4, 5]) //=> 5
+```
+
+### `sum(iterable: Iterable<number>, start?: number): number`
+
+Sums `start` and the items of an `iterable` from left to right and returns the total.
+
+```ts
+sum([1, 2, 3, 4, 5]) //=> 15
+```
+
 ## Reference
 
 * [Itertools Recipes](https://docs.python.org/3/library/itertools.html#itertools-recipes)

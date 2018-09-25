@@ -389,4 +389,45 @@ describe('iterative', () => {
       expect(iter.dict(iterable)).toEqual({ 1: true, 2: true, 3: true })
     })
   })
+
+  describe('len', () => {
+    it('should count the length of an iterable', () => {
+      const iterable = iter.range(0, 5)
+
+      expect(iter.len(iterable)).toEqual(5)
+    })
+  })
+
+  describe('min', () => {
+    it('should find the minimum value', () => {
+      expect(iter.min([1, 5, -2])).toEqual(-2)
+    })
+
+    it('should find minimum value by key', () => {
+      const iterable = iter.zip(iter.repeat(true), iter.range(0, 100))
+
+      expect(iter.min(iterable, x => x[1])).toEqual([true, 0])
+    })
+  })
+
+  describe('max', () => {
+    it('should find the maximum value', () => {
+      expect(iter.max([1, 5, -2])).toEqual(5)
+    })
+
+    it('should find maximum value by key', () => {
+      const iterable = iter.zip(iter.repeat(true), iter.range(0, 100))
+
+      expect(iter.max(iterable, x => x[1])).toEqual([true, 99])
+    })
+  })
+
+  describe('sum', () => {
+    it('should sum an iterable', () => {
+      expect(iter.sum(iter.range(0, 10))).toEqual(45)
+    })
+    it('should sum an iterable with custom start', () => {
+      expect(iter.sum(iter.range(0, 10), 5)).toEqual(50)
+    })
+  })
 })
