@@ -431,12 +431,28 @@ export function * compress <T> (iterable: Iterable<T>, selectors: Iterable<boole
 }
 
 /**
+ * Compare the two objects x and y and return an integer according to the
+ * outcome. The return value is negative if `x < y`, positive if `x > y`,
+ * otherwise zero.
+ */
+export function cmp <T> (x: T, y: T) {
+  return x > y ? 1 : x < y ? -1 : 0
+}
+
+/**
  * Return a sorted array from the items in iterable.
  */
-export function sorted <T> (iterable: Iterable<T>, key: (x: T) => string | number, reverse = false): Array<T> {
-  const dir = reverse ? -1 : 1
-  const array = Array.from<T, [number | string, T]>(iterable, item => [key(item), item])
-  return array.sort((a, b) => a[0] > b[0] ? dir : (a[0] < b[0] ? -dir : 0)).map(x => x[1])
+export function sorted <T, U = T> (
+  iterable: Iterable<T>,
+  keyFn: (x: T) => U = x => x as any,
+  cmpFn: (x: U, y: U) => number = cmp,
+  reverse = false
+): Array<T> {
+  const array = Array.from<T, [U, T]>(iterable, item => [keyFn(item), item])
+  const sortFn = reverse
+  ? ((a: [U, T], b: [U, T]) => -cmpFn(a[0], b[0]))
+  : ((a: [U, T], b: [U, T]) => cmpFn(a[0], b[0]))
+  return array.sort(sortFn).map(x => x[1])
 }
 
 /**

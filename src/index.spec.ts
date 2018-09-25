@@ -352,15 +352,33 @@ describe('iterative', () => {
 
   describe('sorted', () => {
     it('should return a sorted list', () => {
-      const list = iter.sorted(iter.slice(iter.cycle([1, 2, 3]), 0, 10), x => x)
+      const list = iter.sorted(iter.slice(iter.cycle([1, 2, 3]), 0, 10))
 
       expect(list).toEqual([1, 1, 1, 1, 2, 2, 2, 3, 3, 3])
     })
 
     it('should return list in reverse order', () => {
-      const list = iter.sorted(iter.slice(iter.range(), 0, 10), x => x, true)
+      const list = iter.sorted(iter.slice(iter.range(), 0, 10), undefined, undefined, true)
 
       expect(list).toEqual([9, 8, 7, 6, 5, 4, 3, 2, 1, 0])
+    })
+
+    it('should allow key function', () => {
+      const list = iter.sorted([{ x: 3 }, { x: 2 }, { x: 1 }], x => x.x)
+
+      expect(list).toEqual([{ x: 1 }, { x: 2 }, { x: 3 }])
+    })
+
+    it('should allow compare function', () => {
+      const list = iter.sorted([1, 2, 3, 4, 5], undefined, (x, y) => y - x)
+
+      expect(list).toEqual([5, 4, 3, 2, 1])
+    })
+
+    it('should combine key and compare functions', () => {
+      const list = iter.sorted([{ x: 2 }, { x: 1 }, { x: 3 }], x => x.x, (x, y) => y - x)
+
+      expect(list).toEqual([{ x: 3 }, { x: 2 }, { x: 1 }])
     })
   })
 

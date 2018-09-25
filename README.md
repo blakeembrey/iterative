@@ -211,7 +211,7 @@ Make an iterator that filters elements from `iterable` returning only those that
 compress([1, 2, 3, 4, 5], [true, false, true, false, true]) //=> [1, 3, 5]
 ```
 
-### `sorted<T>(iterable: Iterable<T>, key: (x: T) => string | number, reverse?: boolean): T[]`
+### `sorted<T, U>(iterable: Iterable<T>, key: (x: T) => U, cmp: (x: U, y: U) => number, reverse?: boolean): T[]`
 
 Return a sorted array from the items in iterable.
 
