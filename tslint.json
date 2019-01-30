@@ -1,8 +1,6 @@
 {
-  "extends": "tslint-config-standard",
+  "extends": ["tslint-config-standard", "tslint-config-prettier"],
   "rules": {
-    "no-conditional-assignment": false,
-    "unified-signatures": false,
-    "return-undefined": false
+    "no-conditional-assignment": false
   }
 }
