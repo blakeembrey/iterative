@@ -1,4 +1,4 @@
-import { StopIteration, SENTINEL } from "./common";
+import { StopIteration, SENTINEL, identity, cmp } from "./common";
 
 /**
  * Sync and async iterable objects.
@@ -30,9 +30,9 @@ export type AnyPredicate<T, U extends T = T> =
 export type AnyReducer<T, U> = (result: U, item: T) => U | Promise<U>;
 
 /**
- *
+ * Unary function mapping an input value to an output value.
  */
-export type AnyResult<T, U> = (x: T) => U | Promise<U>;
+export type AnyFunc<T, U> = (item: T) => U | Promise<U>;
 
 /**
  * Returns `true` when all values in iterable are truthy.
@@ -236,7 +236,7 @@ export async function* takeWhile<T>(
  */
 export async function* groupBy<T, U>(
   iterable: AnyIterable<T>,
-  func: (x: T) => U | Promise<U>
+  func: AnyFunc<T, U>
 ): AsyncIterable<[U, AsyncIterable<T>]> {
   const it = iter(iterable);
   let item = await it.next();
@@ -333,7 +333,7 @@ export async function reduce<T, U>(
  */
 export async function* map<T, U>(
   iterable: AnyIterable<T>,
-  func: (x: T) => U | Promise<U>
+  func: AnyFunc<T, U>
 ): AsyncIterable<U> {
   for await (const item of iterable) yield func(item);
 }
@@ -515,44 +515,43 @@ export async function* compress<T>(
 }
 
 /**
- * Compare the two objects x and y and return an integer according to the
- * outcome. The return value is negative if `x < y`, positive if `x > y`,
- * otherwise zero.
- */
-export function cmp<T>(x: T, y: T) {
-  return x > y ? 1 : x < y ? -1 : 0;
-}
-
-/**
  * Creates an array from an iterable object.
  */
-export function list<T>(iterable: AnyIterable<T>): Promise<Array<T>>;
-export function list<T, U>(
+export function list<T, U = T>(
   iterable: AnyIterable<T>,
-  fn: (item: T) => U
+  fn?: AnyFunc<T, U>
 ): Promise<Array<U>>;
 export async function list<T, U>(
   iterable: AnyIterable<T>,
-  fn?: (item: T) => U
+  fn: AnyFunc<T, T | U> = identity
 ): Promise<Array<T | U>> {
   const result: Array<T | U> = [];
-  for await (const item of iterable) result.push(fn ? fn(item) : item);
+  for await (const item of iterable) result.push(await fn(item));
   return result;
 }
 
 /**
  * Return a sorted array from the items in iterable.
  */
-export async function sorted<T, U = T>(
+export function sorted<T, U = T>(
   iterable: AnyIterable<T>,
-  keyFn: (x: T) => U = x => x as any,
-  cmpFn: (x: U, y: U) => number = cmp,
+  keyFn?: AnyFunc<T, U>,
+  cmpFn?: (x: U, y: U) => number,
+  reverse?: boolean
+): Promise<Array<T>>;
+export async function sorted<T, U>(
+  iterable: AnyIterable<T>,
+  keyFn: AnyFunc<T, U | T> = identity,
+  cmpFn: (x: U | T, y: U | T) => number = cmp,
   reverse = false
 ): Promise<Array<T>> {
-  const array = await list<T, [U, T]>(iterable, item => [keyFn(item), item]);
+  const array = await list(
+    iterable,
+    async (item): Promise<[U | T, T]> => [await keyFn(item), item]
+  );
   const sortFn = reverse
-    ? (a: [U, T], b: [U, T]) => -cmpFn(a[0], b[0])
-    : (a: [U, T], b: [U, T]) => cmpFn(a[0], b[0]);
+    ? (a: [U | T, T], b: [U | T, T]) => -cmpFn(a[0], b[0])
+    : (a: [U | T, T], b: [U | T, T]) => cmpFn(a[0], b[0]);
   return array.sort(sortFn).map(x => x[1]);
 }
 
@@ -587,17 +586,17 @@ export async function len(iterable: AnyIterable<any>): Promise<number> {
 export function min(iterable: AnyIterable<number>): Promise<number>;
 export function min<T>(
   iterable: AnyIterable<T>,
-  keyFn: (x: T) => Promise<number> | number
+  keyFn: AnyFunc<T, number>
 ): Promise<number>;
-export async function min<T>(
+export async function min<T extends number>(
   iterable: AnyIterable<T>,
-  keyFn?: (x: T) => Promise<number> | number
+  keyFn: AnyFunc<T, T> = identity
 ) {
   let value = Infinity;
   let result = undefined;
 
   for await (const item of iterable) {
-    const tmp = keyFn ? await keyFn(item) : (item as any);
+    const tmp = await keyFn(item);
     if (tmp < value) {
       value = tmp;
       result = item;
@@ -613,17 +612,17 @@ export async function min<T>(
 export function max(iterable: AnyIterable<number>): Promise<number>;
 export function max<T>(
   iterable: AnyIterable<T>,
-  keyFn: (x: T) => number
+  keyFn: AnyFunc<T, number>
 ): Promise<number>;
-export async function max<T>(
+export async function max<T extends number>(
   iterable: AnyIterable<T>,
-  keyFn?: (x: T) => Promise<number> | number
+  keyFn: AnyFunc<T, T> = identity
 ) {
   let value = -Infinity;
   let result = undefined;
 
   for await (const item of iterable) {
-    const tmp = keyFn ? await keyFn(item) : (item as any);
+    const tmp = await keyFn(item);
     if (tmp > value) {
       value = tmp;
       result = item;

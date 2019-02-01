@@ -1,4 +1,4 @@
-import { StopIteration, SENTINEL } from "./common";
+import { StopIteration, SENTINEL, identity, cmp } from "./common";
 
 /**
  * Predicate for filtering items.
@@ -16,6 +16,11 @@ export type Reducer<T, U> = (result: U, item: T) => U;
  * List of values to list of iterable values.
  */
 export type TupleIterable<T extends any[]> = { [K in keyof T]: Iterable<T[K]> };
+
+/**
+ * Unary function mapping an input value to an output value.
+ */
+export type Func<T, U> = (item: T) => U;
 
 /**
  * Returns `true` when all values in iterable are truthy.
@@ -198,7 +203,7 @@ export function* takeWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>) {
  */
 export function* groupBy<T, U>(
   iterable: Iterable<T>,
-  func: (x: T) => U
+  func: Func<T, U>
 ): Iterable<[U, Iterable<T>]> {
   const it = iter(iterable);
   let item = it.next();
@@ -292,7 +297,7 @@ export function reduce<T, U>(
  */
 export function* map<T, U>(
   iterable: Iterable<T>,
-  func: (x: T) => U
+  func: Func<T, U>
 ): Iterable<U> {
   for (const item of iterable) yield func(item);
 }
@@ -465,25 +470,18 @@ export function* compress<T>(
 }
 
 /**
- * Compare the two objects x and y and return an integer according to the
- * outcome. The return value is negative if `x < y`, positive if `x > y`,
- * otherwise zero.
- */
-export function cmp<T>(x: T, y: T) {
-  return x > y ? 1 : x < y ? -1 : 0;
-}
-
-/**
  * Creates an array from an iterable object.
  */
-export function list<T>(iterable: Iterable<T>): Array<T>;
-export function list<T, U>(iterable: Iterable<T>, fn: (item: T) => U): Array<U>;
+export function list<T, U = T>(
+  iterable: Iterable<T>,
+  fn?: Func<T, U>
+): Array<U>;
 export function list<T, U>(
   iterable: Iterable<T>,
-  fn?: (item: T) => U
+  fn: Func<T, T | U> = identity
 ): Array<T | U> {
   const result: Array<T | U> = [];
-  for (const item of iterable) result.push(fn ? fn(item) : item);
+  for (const item of iterable) result.push(fn(item));
   return result;
 }
 
@@ -492,14 +490,20 @@ export function list<T, U>(
  */
 export function sorted<T, U = T>(
   iterable: Iterable<T>,
-  keyFn: (x: T) => U = x => x as any,
-  cmpFn: (x: U, y: U) => number = cmp,
+  keyFn?: Func<T, U>,
+  cmpFn?: (x: U, y: U) => number,
+  reverse?: boolean
+): Array<T>;
+export function sorted<T, U>(
+  iterable: Iterable<T>,
+  keyFn: Func<T, U | T> = identity,
+  cmpFn: (x: U | T, y: U | T) => number = cmp,
   reverse = false
 ): Array<T> {
-  const array = list<T, [U, T]>(iterable, item => [keyFn(item), item]);
+  const array = list<T, [U | T, T]>(iterable, item => [keyFn(item), item]);
   const sortFn = reverse
-    ? (a: [U, T], b: [U, T]) => -cmpFn(a[0], b[0])
-    : (a: [U, T], b: [U, T]) => cmpFn(a[0], b[0]);
+    ? (a: [U | T, T], b: [U | T, T]) => -cmpFn(a[0], b[0])
+    : (a: [U | T, T], b: [U | T, T]) => cmpFn(a[0], b[0]);
   return array.sort(sortFn).map(x => x[1]);
 }
 
@@ -533,9 +537,9 @@ export function len(iterable: Iterable<any>): number {
  */
 export function min(iterable: Iterable<number>): number;
 export function min<T>(iterable: Iterable<T>, keyFn: (x: T) => number): number;
-export function min<T>(
+export function min<T extends number>(
   iterable: Iterable<T>,
-  keyFn: (x: T) => number = x => x as any
+  keyFn: Func<T, T> = identity
 ) {
   let value = Infinity;
   let result = undefined;
@@ -556,9 +560,9 @@ export function min<T>(
  */
 export function max(iterable: Iterable<number>): number;
 export function max<T>(iterable: Iterable<T>, keyFn: (x: T) => number): number;
-export function max<T>(
+export function max<T extends number>(
   iterable: Iterable<T>,
-  keyFn: (x: T) => number = x => x as any
+  keyFn: Func<T, T> = identity
 ) {
   let value = -Infinity;
   let result = undefined;
