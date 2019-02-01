@@ -17,7 +17,7 @@ npm install iterative --save
 
 ## Usage
 
-🚨 The packages comes in two flavors, `Iterator` and `AsyncIterator`. Import from `iterative/dist/async` for async iterators. 🚨
+**🚨 The packages comes in two flavors, `Iterator` and `AsyncIterator`. Use `iterative/dist/async` for async iterators. 🚨**
 
 ### `range(start = 0, stop = Infinity, step = 1): Iterable<number>`
 
