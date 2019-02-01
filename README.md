@@ -17,6 +17,8 @@ npm install iterative --save
 
 ## Usage
 
+🚨 The packages comes in two flavors, `Iterator` and `AsyncIterator`. Import from `iterative/dist/async` for async iterators. 🚨
+
 ### `range(start = 0, stop = Infinity, step = 1): Iterable<number>`
 
 This is a versatile function to create lists containing arithmetic progressions.
@@ -117,7 +119,7 @@ all([1, 2, 3], x => x % 2 === 0); //=> false
 
 ### `any<T, U extends T>(iterable: Iterable<T>, predicate: Predicate<T, U> = Boolean): boolean`
 
-Returns `true` when any value in iterable are truthy.
+Returns `true` when any value in iterable is truthy.
 
 ```ts
 any([1, 2, 3], x => x % 2 === 0); //=> true
@@ -217,6 +219,14 @@ Return a sorted array from the items in iterable.
 
 ```ts
 sorted(slice(range(), 0, 10), x => x);
+```
+
+### `list<T>(iterable: Iterable<T>): T[]`
+
+Creates an array from an iterable object.
+
+```ts
+list(range(0, 5)); //=> [0, 1, 2, 3, 4]
 ```
 
 ### `dict<K, V>(iterable: Iterable<[K, V]>): Record<K, V>`

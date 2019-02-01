@@ -1,31 +1,48 @@
 import { StopIteration, SENTINEL } from "./common";
 
 /**
- * Predicate for filtering items.
+ * Sync and async iterable objects.
  */
-export type Predicate<T, U extends T = T> =
-  | ((item: T) => item is U)
-  | ((item: T) => boolean);
+export type AnyIterable<T> = AsyncIterable<T> | Iterable<T>;
 
 /**
- * Reducer function.
+ * Sync and async iterator objects.
  */
-export type Reducer<T, U> = (result: U, item: T) => U;
+export type AnyIterator<T> = AsyncIterator<T> | Iterator<T>;
 
 /**
  * List of values to list of iterable values.
  */
-export type TupleIterable<T extends any[]> = { [K in keyof T]: Iterable<T[K]> };
+export type AnyTupleIterable<T extends any[]> = {
+  [K in keyof T]: AnyIterable<T[K]>
+};
+
+/**
+ * Async predicate for filtering items.
+ */
+export type AnyPredicate<T, U extends T = T> =
+  | ((item: T) => item is U)
+  | ((item: T) => boolean | Promise<boolean>);
+
+/**
+ * Async reducer function.
+ */
+export type AnyReducer<T, U> = (result: U, item: T) => U | Promise<U>;
+
+/**
+ *
+ */
+export type AnyResult<T, U> = (x: T) => U | Promise<U>;
 
 /**
  * Returns `true` when all values in iterable are truthy.
  */
-export function all<T, U extends T>(
-  iterable: Iterable<T>,
-  predicate: Predicate<T, U> = Boolean
+export async function all<T, U extends T>(
+  iterable: AsyncIterable<T>,
+  predicate: AnyPredicate<T, U> = Boolean
 ) {
-  for (const item of iterable) {
-    if (!predicate(item)) return false;
+  for await (const item of iterable) {
+    if (!(await predicate(item))) return false;
   }
 
   return true;
@@ -34,12 +51,12 @@ export function all<T, U extends T>(
 /**
  * Returns `true` when any value in iterable is truthy.
  */
-export function any<T, U extends T>(
-  iterable: Iterable<T>,
-  predicate: Predicate<T, U> = Boolean
+export async function any<T, U extends T>(
+  iterable: AnyIterable<T>,
+  predicate: AnyPredicate<T, U> = Boolean
 ) {
-  for (const item of iterable) {
-    if (predicate(item)) return true;
+  for await (const item of iterable) {
+    if (await predicate(item)) return true;
   }
 
   return false;
@@ -48,36 +65,35 @@ export function any<T, U extends T>(
 /**
  * Returns `true` when any value in iterable is equal to `needle`.
  */
-export function contains<T>(iterable: Iterable<T>, needle: T) {
+export function contains<T>(iterable: AnyIterable<T>, needle: T) {
   return any(iterable, x => x === needle);
 }
 
 /**
  * Returns an iterable of enumeration pairs.
  */
-export function* enumerate<T>(
-  iterable: Iterable<T>,
+export async function* enumerate<T>(
+  iterable: AnyIterable<T>,
   offset = 0
-): Iterable<[number, T]> {
+): AsyncIterable<[number, T]> {
   let index = offset;
 
-  for (const value of iterable) yield [index++, value];
-}
-
-/**
- * Returns an iterator object for the given `iterable`.
- */
-export function iter<T>(iterable: Iterable<T>): Iterator<T> {
-  return iterable[Symbol.iterator]();
+  for await (const value of iterable) yield [index++, value];
 }
 
 /**
  * Get next iterator value, throw when `done`.
  */
-export function next<T>(iterator: Iterator<T>): T;
-export function next<T, U>(iterator: Iterator<T>, defaultValue: U): T | U;
-export function next<T, U>(iterator: Iterator<T>, defaultValue?: U): T | U {
-  const item = iterator.next();
+export function next<T>(iterator: AnyIterator<T>): Promise<T>;
+export function next<T, U>(
+  iterator: AnyIterator<T>,
+  defaultValue: U
+): Promise<T | U>;
+export async function next<T, U>(
+  iterator: AnyIterator<T>,
+  defaultValue?: U
+): Promise<T | U> {
+  const item = await iterator.next();
   if (item.done) {
     if (arguments.length === 1) throw new StopIteration();
     return defaultValue as U;
@@ -86,22 +102,30 @@ export function next<T, U>(iterator: Iterator<T>, defaultValue?: U): T | U {
 }
 
 /**
+ * Returns an iterator object for the given `iterable`.
+ */
+export function iter<T>(iterable: AnyIterable<T>): AnyIterator<T> {
+  return ((iterable as AsyncIterable<T>)[Symbol.asyncIterator] ||
+    (iterable as Iterable<T>)[Symbol.iterator])();
+}
+
+/**
  * Make an iterator that returns accumulated results of binary functions.
  */
-export function* accumulate<T>(
-  iterable: Iterable<T>,
-  func: Reducer<T, T>
-): Iterable<T> {
+export async function* accumulate<T>(
+  iterable: AnyIterable<T>,
+  func: AnyReducer<T, T>
+): AsyncIterable<T> {
   const it = iter(iterable);
-  let item = it.next();
+  let item = await it.next();
   let total = item.value;
 
   if (item.done) return;
   yield total;
 
-  while ((item = it.next())) {
+  while ((item = await it.next())) {
     if (item.done) break;
-    total = func(total, item.value);
+    total = await func(total, item.value);
     yield total;
   }
 }
@@ -109,9 +133,11 @@ export function* accumulate<T>(
 /**
  * Return an iterator flattening one level of nesting in an iterable of iterables.
  */
-export function* flatten<T>(iterable: Iterable<Iterable<T>>): Iterable<T> {
-  for (const it of iterable) {
-    for (const item of it) {
+export async function* flatten<T>(
+  iterable: AnyIterable<AnyIterable<T>>
+): AsyncIterable<T> {
+  for await (const it of iterable) {
+    for await (const item of it) {
       yield item;
     }
   }
@@ -122,14 +148,20 @@ export function* flatten<T>(iterable: Iterable<Iterable<T>>): Iterable<T> {
  * exhausted, then proceeds to the next iterable, until all of the iterables are
  * exhausted. Used for treating consecutive sequences as a single sequence.
  */
-export function chain<T>(...iterables: Array<Iterable<T>>): Iterable<T> {
+export function chain<T>(
+  ...iterables: Array<AnyIterable<T>>
+): AsyncIterable<T> {
   return flatten(iterables);
 }
 
 /**
  * This is a versatile function to create lists containing arithmetic progressions.
  */
-export function* range(start = 0, stop = Infinity, step = 1): Iterable<number> {
+export async function* range(
+  start = 0,
+  stop = Infinity,
+  step = 1
+): AsyncIterable<number> {
   for (let i = start; i < stop; i += step) yield i;
 }
 
@@ -138,10 +170,10 @@ export function* range(start = 0, stop = Infinity, step = 1): Iterable<number> {
  * each. When the iterable is exhausted, return elements from the saved copy.
  * Repeats indefinitely.
  */
-export function* cycle<T>(iterable: Iterable<T>): Iterable<T> {
+export async function* cycle<T>(iterable: AnyIterable<T>): AsyncIterable<T> {
   const saved: T[] = [];
 
-  for (const item of iterable) {
+  for await (const item of iterable) {
     yield item;
     saved.push(item);
   }
@@ -156,7 +188,7 @@ export function* cycle<T>(iterable: Iterable<T>): Iterable<T> {
 /**
  * Make an iterator that repeats `value` over and over again.
  */
-export function* repeat<T>(value: T): Iterable<T> {
+export async function* repeat<T>(value: T): AsyncIterable<T> {
   while (true) yield value;
 }
 
@@ -164,19 +196,22 @@ export function* repeat<T>(value: T): Iterable<T> {
  * Make an iterator that drops elements from the iterable as long as the
  * predicate is true; afterwards, returns every element.
  */
-export function* dropWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>) {
+export async function* dropWhile<T>(
+  iterable: AnyIterable<T>,
+  predicate: AnyPredicate<T>
+) {
   const it = iter(iterable);
-  let item = it.next();
+  let item = await it.next();
 
   while (!item.done) {
-    if (!predicate(item.value)) break;
+    if (!(await predicate(item.value))) break;
 
-    item = it.next();
+    item = await it.next();
   }
 
   do {
     yield item.value;
-    item = it.next();
+    item = await it.next();
   } while (!item.done);
 }
 
@@ -184,9 +219,12 @@ export function* dropWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>) {
  * Make an iterator that returns elements from the iterable as long as the
  * predicate is true.
  */
-export function* takeWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>) {
-  for (const item of iterable) {
-    if (!predicate(item)) break;
+export async function* takeWhile<T>(
+  iterable: AnyIterable<T>,
+  predicate: AnyPredicate<T>
+) {
+  for await (const item of iterable) {
+    if (!(await predicate(item))) break;
 
     yield item;
   }
@@ -196,23 +234,23 @@ export function* takeWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>) {
  * Make an iterator that returns consecutive keys and groups from the `iterable`.
  * The `func` is a function computing a key value for each element.
  */
-export function* groupBy<T, U>(
-  iterable: Iterable<T>,
-  func: (x: T) => U
-): Iterable<[U, Iterable<T>]> {
+export async function* groupBy<T, U>(
+  iterable: AnyIterable<T>,
+  func: (x: T) => U | Promise<U>
+): AsyncIterable<[U, AsyncIterable<T>]> {
   const it = iter(iterable);
-  let item = it.next();
+  let item = await it.next();
 
   if (item.done) return;
 
-  let key = func(item.value);
+  let key = await func(item.value);
   let currKey: U | typeof SENTINEL = key;
 
-  function* grouper(): Iterable<T> {
+  async function* grouper(): AsyncIterable<T> {
     do {
       yield item.value;
 
-      item = it.next();
+      item = await it.next();
 
       // Break iteration when underlying iterator is `done`.
       if (item.done) {
@@ -220,7 +258,7 @@ export function* groupBy<T, U>(
         return;
       }
 
-      currKey = func(item.value);
+      currKey = await func(item.value);
     } while (key === currKey);
   }
 
@@ -229,9 +267,9 @@ export function* groupBy<T, U>(
 
     // Skip over any remaining values not pulled from `grouper`.
     while (key === currKey) {
-      item = it.next();
+      item = await it.next();
       if (item.done) return;
-      currKey = func(item.value);
+      currKey = await func(item.value);
     }
 
     key = currKey;
@@ -241,21 +279,21 @@ export function* groupBy<T, U>(
 /**
  * Make an iterator that returns selected elements from the `iterable`.
  */
-export function* slice<T>(
-  iterable: Iterable<T>,
+export async function* slice<T>(
+  iterable: AnyIterable<T>,
   start = 0,
   stop = Infinity,
   step = 1
 ) {
   const it = iter(range(start, stop, step));
-  let next = it.next();
+  let next = await it.next();
 
-  for (const [index, item] of enumerate(iterable)) {
+  for await (const [index, item] of enumerate(iterable)) {
     if (next.done) return;
 
     if (index === next.value) {
       yield item;
-      next = it.next();
+      next = await it.next();
     }
   }
 }
@@ -264,24 +302,27 @@ export function* slice<T>(
  * Apply function of two arguments cumulatively to the items of `iterable`, from
  * left to right, so as to reduce the iterable to a single value.
  */
-export function reduce<T>(iterable: Iterable<T>, reducer: Reducer<T, T>): T;
+export function reduce<T>(
+  iterable: AnyIterable<T>,
+  reducer: AnyReducer<T, T>
+): T;
 export function reduce<T, U>(
-  iterable: Iterable<T>,
-  reducer: Reducer<T, U>,
+  iterable: AnyIterable<T>,
+  reducer: AnyReducer<T, U>,
   initializer: U
-): U;
-export function reduce<T, U>(
-  iterable: Iterable<T>,
-  reducer: Reducer<T, T | U>,
-  initializer?: U
-): T | U {
+): Promise<U>;
+export async function reduce<T, U>(
+  iterable: AnyIterable<T>,
+  reducer: AnyReducer<T, T | U>,
+  initializer?: U | Promise<U>
+): Promise<T | U> {
   const it = iter(iterable);
   let item: IteratorResult<T>;
-  let accumulator: T | U = initializer === undefined ? next(it) : initializer;
+  let accumulator = await (initializer === undefined ? next(it) : initializer);
 
-  while ((item = it.next())) {
+  while ((item = await it.next())) {
     if (item.done) break;
-    accumulator = reducer(accumulator, item.value);
+    accumulator = await reducer(accumulator, item.value);
   }
 
   return accumulator;
@@ -290,11 +331,11 @@ export function reduce<T, U>(
 /**
  * Apply function to every item of iterable and return an iterable of the results.
  */
-export function* map<T, U>(
-  iterable: Iterable<T>,
-  func: (x: T) => U
-): Iterable<U> {
-  for (const item of iterable) yield func(item);
+export async function* map<T, U>(
+  iterable: AnyIterable<T>,
+  func: (x: T) => U | Promise<U>
+): AsyncIterable<U> {
+  for await (const item of iterable) yield func(item);
 }
 
 /**
@@ -304,22 +345,22 @@ export function* map<T, U>(
  * The difference between `map()` and `spreadmap()` parallels the distinction
  * between `function(a, b)` and `function(...c)`.
  */
-export function* spreadmap<T extends any[], U>(
-  iterable: Iterable<T>,
-  func: (...args: T) => U
-): Iterable<U> {
-  for (const item of iterable) yield func(...item);
+export async function* spreadmap<T extends any[], U>(
+  iterable: AnyIterable<T>,
+  func: (...args: T) => U | Promise<U>
+): AsyncIterable<U> {
+  for await (const item of iterable) yield func(...item);
 }
 
 /**
  * Construct an `iterator` from those elements of `iterable` for which `func` returns true.
  */
-export function* filter<T, U extends T>(
-  iterable: Iterable<T>,
-  func: Predicate<T, U> = Boolean
-): Iterable<U> {
-  for (const item of iterable) {
-    if (func(item)) yield item;
+export async function* filter<T>(
+  iterable: AnyIterable<T>,
+  func: AnyPredicate<T, T> = Boolean
+): AsyncIterable<T> {
+  for await (const item of iterable) {
+    if (await func(item)) yield item;
   }
 }
 
@@ -329,16 +370,17 @@ export function* filter<T, U extends T>(
  * from each of the argument sequences or iterables. The iterator stops when the
  * shortest input iterable is exhausted.
  */
-export function* zip<T extends any[]>(
-  ...iterables: TupleIterable<T>
-): Iterable<T> {
+export async function* zip<T extends any[]>(
+  ...iterables: AnyTupleIterable<T>
+): AsyncIterable<T> {
   const iters = iterables.map(x => iter(x));
 
   while (iters.length) {
     const result = Array(iters.length) as T;
+    const items = await Promise.all(iters.map(x => x.next()));
 
-    for (let i = 0; i < iters.length; i++) {
-      const item = iters[i].next();
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       if (item.done) return;
       result[i] = item.value;
     }
@@ -352,18 +394,19 @@ export function* zip<T extends any[]>(
  * iterables are of uneven length, missing values are `undefined`. Iteration
  * continues until the longest iterable is exhausted.
  */
-export function* zipLongest<T extends any[]>(
-  ...iterables: TupleIterable<T>
-): Iterable<Partial<T>> {
-  const iters: Array<Iterator<T | undefined>> = iterables.map(x => iter(x));
+export async function* zipLongest<T extends any[]>(
+  ...iterables: AnyTupleIterable<T>
+): AsyncIterable<Partial<T>> {
+  const iters: Array<AnyIterator<T | undefined>> = iterables.map(x => iter(x));
   const noop = iter(repeat(undefined));
   let counter = iters.length;
 
   while (true) {
     const result = Array(iters.length) as Partial<T>;
+    const items = await Promise.all(iters.map(x => x.next()));
 
-    for (let i = 0; i < iters.length; i++) {
-      const item = iters[i].next();
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
 
       if (item.done) {
         counter -= 1;
@@ -382,12 +425,14 @@ export function* zipLongest<T extends any[]>(
 /**
  * Return two independent iterables from a single iterable.
  */
-export function tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>] {
+export function tee<T>(
+  iterable: AnyIterable<T>
+): [AsyncIterable<T>, AsyncIterable<T>] {
   const queue: T[] = [];
   const it = iter(iterable);
   let owner: -1 | 0 | 1;
 
-  function* gen(id: 0 | 1): Iterable<T> {
+  async function* gen(id: 0 | 1): AsyncIterable<T> {
     while (true) {
       while (queue.length) {
         yield queue.shift()!;
@@ -397,7 +442,7 @@ export function tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>] {
 
       let item: IteratorResult<T>;
 
-      while ((item = it.next())) {
+      while ((item = await it.next())) {
         if (item.done) {
           owner = -1;
           return;
@@ -417,10 +462,13 @@ export function tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>] {
 /**
  * Break iterable into lists of length `size`.
  */
-export function* chunk<T>(iterable: Iterable<T>, size: number): Iterable<T[]> {
+export async function* chunk<T>(
+  iterable: AnyIterable<T>,
+  size: number
+): AsyncIterable<T[]> {
   let chunk: T[] = [];
 
-  for (const item of iterable) {
+  for await (const item of iterable) {
     chunk.push(item);
 
     if (chunk.length === size) {
@@ -437,14 +485,16 @@ export function* chunk<T>(iterable: Iterable<T>, size: number): Iterable<T[]> {
  * the input iterable has a finite number of items `n`, the outputted iterable
  * will have `n - 1` items.
  */
-export function* pairwise<T>(iterable: Iterable<T>): Iterable<[T, T]> {
+export async function* pairwise<T>(
+  iterable: AnyIterable<T>
+): AsyncIterable<[T, T]> {
   const it = iter(iterable);
-  let item = it.next();
+  let item = await it.next();
   let prev = item.value;
 
   if (item.done) return;
 
-  while ((item = it.next())) {
+  while ((item = await it.next())) {
     if (item.done) return;
     yield [prev, item.value];
     prev = item.value;
@@ -455,11 +505,11 @@ export function* pairwise<T>(iterable: Iterable<T>): Iterable<[T, T]> {
  * Make an iterator that filters elements from `iterable` returning only those
  * that have a corresponding element in selectors that evaluates to `true`.
  */
-export function* compress<T>(
-  iterable: Iterable<T>,
-  selectors: Iterable<boolean>
-): Iterable<T> {
-  for (const [item, valid] of zip(iterable, selectors)) {
+export async function* compress<T>(
+  iterable: AnyIterable<T>,
+  selectors: AnyIterable<boolean>
+): AsyncIterable<T> {
+  for await (const [item, valid] of zip(iterable, selectors)) {
     if (valid) yield item;
   }
 }
@@ -476,27 +526,30 @@ export function cmp<T>(x: T, y: T) {
 /**
  * Creates an array from an iterable object.
  */
-export function list<T>(iterable: Iterable<T>): Array<T>;
-export function list<T, U>(iterable: Iterable<T>, fn: (item: T) => U): Array<U>;
+export function list<T>(iterable: AnyIterable<T>): Promise<Array<T>>;
 export function list<T, U>(
-  iterable: Iterable<T>,
+  iterable: AnyIterable<T>,
+  fn: (item: T) => U
+): Promise<Array<U>>;
+export async function list<T, U>(
+  iterable: AnyIterable<T>,
   fn?: (item: T) => U
-): Array<T | U> {
+): Promise<Array<T | U>> {
   const result: Array<T | U> = [];
-  for (const item of iterable) result.push(fn ? fn(item) : item);
+  for await (const item of iterable) result.push(fn ? fn(item) : item);
   return result;
 }
 
 /**
  * Return a sorted array from the items in iterable.
  */
-export function sorted<T, U = T>(
-  iterable: Iterable<T>,
+export async function sorted<T, U = T>(
+  iterable: AnyIterable<T>,
   keyFn: (x: T) => U = x => x as any,
   cmpFn: (x: U, y: U) => number = cmp,
   reverse = false
-): Array<T> {
-  const array = list<T, [U, T]>(iterable, item => [keyFn(item), item]);
+): Promise<Array<T>> {
+  const array = await list<T, [U, T]>(iterable, item => [keyFn(item), item]);
   const sortFn = reverse
     ? (a: [U, T], b: [U, T]) => -cmpFn(a[0], b[0])
     : (a: [U, T], b: [U, T]) => cmpFn(a[0], b[0]);
@@ -506,9 +559,9 @@ export function sorted<T, U = T>(
 /**
  * Return an object from an iterable, i.e. `Array.from` for objects.
  */
-export function dict<K extends string | number | symbol, V>(
-  iterable: Iterable<[K, V]>
-): Record<K, V> {
+export async function dict<K extends string | number | symbol, V>(
+  iterable: AnyIterable<[K, V]>
+): Promise<Record<K, V>> {
   return reduce(
     iterable,
     (obj, [key, value]) => {
@@ -522,26 +575,29 @@ export function dict<K extends string | number | symbol, V>(
 /**
  * Return the length (the number of items) of an iterable.
  */
-export function len(iterable: Iterable<any>): number {
+export async function len(iterable: AnyIterable<any>): Promise<number> {
   let length = 0;
-  for (const _ of iterable) length++;
+  for await (const _ of iterable) length++;
   return length;
 }
 
 /**
  * Return the smallest item in an iterable.
  */
-export function min(iterable: Iterable<number>): number;
-export function min<T>(iterable: Iterable<T>, keyFn: (x: T) => number): number;
+export function min(iterable: AnyIterable<number>): Promise<number>;
 export function min<T>(
-  iterable: Iterable<T>,
-  keyFn: (x: T) => number = x => x as any
+  iterable: AnyIterable<T>,
+  keyFn: (x: T) => Promise<number> | number
+): Promise<number>;
+export async function min<T>(
+  iterable: AnyIterable<T>,
+  keyFn?: (x: T) => Promise<number> | number
 ) {
   let value = Infinity;
   let result = undefined;
 
-  for (const item of iterable) {
-    const tmp = keyFn(item);
+  for await (const item of iterable) {
+    const tmp = keyFn ? await keyFn(item) : (item as any);
     if (tmp < value) {
       value = tmp;
       result = item;
@@ -554,17 +610,20 @@ export function min<T>(
 /**
  * Return the largest item in an iterable.
  */
-export function max(iterable: Iterable<number>): number;
-export function max<T>(iterable: Iterable<T>, keyFn: (x: T) => number): number;
+export function max(iterable: AnyIterable<number>): Promise<number>;
 export function max<T>(
-  iterable: Iterable<T>,
-  keyFn: (x: T) => number = x => x as any
+  iterable: AnyIterable<T>,
+  keyFn: (x: T) => number
+): Promise<number>;
+export async function max<T>(
+  iterable: AnyIterable<T>,
+  keyFn?: (x: T) => Promise<number> | number
 ) {
   let value = -Infinity;
   let result = undefined;
 
-  for (const item of iterable) {
-    const tmp = keyFn(item);
+  for await (const item of iterable) {
+    const tmp = keyFn ? await keyFn(item) : (item as any);
     if (tmp > value) {
       value = tmp;
       result = item;
@@ -578,6 +637,9 @@ export function max<T>(
  * Sums `start` and the items of an `iterable` from left to right and returns
  * the total.
  */
-export function sum(iterable: Iterable<number>, start = 0): number {
+export async function sum(
+  iterable: Iterable<number>,
+  start = 0
+): Promise<number> {
   return reduce(iterable, (x, y) => x + y, start);
 }

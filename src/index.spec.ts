@@ -358,13 +358,14 @@ describe("iterative", () => {
 
   describe("zipLongest", () => {
     it("should zip until the longest value", () => {
-      const iterable = iter.zipLongest(iter.range(0, 2), iter.range(0, 4));
+      const iterable = iter.zipLongest(iter.range(0, 2), iter.range(0, 5));
 
       expect(Array.from(iterable)).toEqual([
         [0, 0],
         [1, 1],
         [undefined, 2],
-        [undefined, 3]
+        [undefined, 3],
+        [undefined, 4]
       ]);
     });
 
