@@ -60,13 +60,11 @@ export function contains<T>(iterable: Iterable<T>, needle: T) {
 /**
  * Returns an iterable of enumeration pairs.
  */
-export function* enumerate<T>(
+export function enumerate<T>(
   iterable: Iterable<T>,
   offset = 0
 ): Iterable<[number, T]> {
-  let index = offset;
-
-  for (const value of iterable) yield [index++, value];
+  return zip(range(offset), iterable);
 }
 
 /**
@@ -161,8 +159,9 @@ export function* cycle<T>(iterable: Iterable<T>): Iterable<T> {
 /**
  * Make an iterator that repeats `value` over and over again.
  */
-export function* repeat<T>(value: T): Iterable<T> {
-  while (true) yield value;
+export function* repeat<T>(value: T, times?: number): Iterable<T> {
+  if (times === undefined) while (true) yield value;
+  for (let i = 0; i < times; i++) yield value;
 }
 
 /**
@@ -584,4 +583,38 @@ export function max<T extends number>(
  */
 export function sum(iterable: Iterable<number>, start = 0): number {
   return reduce(iterable, (x, y) => x + y, start);
+}
+
+/**
+ * Recursively produce all produces of a list of iterators.
+ */
+function* _product<T>(
+  pools: Iterator<T | typeof SENTINEL>[],
+  buffer: T[] = []
+): Iterable<T[]> {
+  if (pools.length === 0) {
+    yield buffer.slice();
+    return;
+  }
+
+  const [pool, ...others] = pools;
+
+  while (true) {
+    const item = pool.next();
+    if (item.value === SENTINEL) break;
+    buffer.push(item.value);
+    yield* _product(others, buffer);
+    buffer.pop();
+  }
+}
+
+/**
+ * Cartesian product of input iterables.
+ */
+export function* product<T extends any[]>(
+  ...iterables: TupleIterable<T>
+): Iterable<T> {
+  const pools = iterables.map(x => iter(cycle(chain(x, repeat(SENTINEL, 1)))));
+
+  yield* _product(pools) as Iterable<T>;
 }

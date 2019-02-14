@@ -149,6 +149,12 @@ describe("iterative", () => {
 
       expect(Array.from(iterable)).toEqual([10, 10, 10, 10, 10]);
     });
+
+    it("should repeat a value up to times", () => {
+      const iterable = iter.repeat(10, 5);
+
+      expect(Array.from(iterable)).toEqual([10, 10, 10, 10, 10]);
+    });
   });
 
   describe("cycle", () => {
@@ -469,8 +475,28 @@ describe("iterative", () => {
     it("should sum an iterable", () => {
       expect(iter.sum(iter.range(0, 10))).toEqual(45);
     });
+
     it("should sum an iterable with custom start", () => {
       expect(iter.sum(iter.range(0, 10), 5)).toEqual(50);
+    });
+  });
+
+  describe("product", () => {
+    it("should generate the product of multiple iterators", () => {
+      const iterable = iter.product("ABCD", "xy");
+
+      const result = [
+        ["A", "x"],
+        ["A", "y"],
+        ["B", "x"],
+        ["B", "y"],
+        ["C", "x"],
+        ["C", "y"],
+        ["D", "x"],
+        ["D", "y"]
+      ];
+
+      expect(Array.from(iterable)).toEqual(result);
     });
   });
 });

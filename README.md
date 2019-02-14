@@ -36,7 +36,7 @@ Make an iterator returning elements from the iterable and saving a copy of each.
 cycle([1, 2, 3]); //=> [1, 2, 3, 1, 2, 3, 1, 2, ...]
 ```
 
-### `repeat<T>(value: T): Iterable<T>`
+### `repeat<T>(value: T, times?: number): Iterable<T>`
 
 Make an iterator that repeats `value` over and over again.
 
@@ -269,6 +269,14 @@ Sums `start` and the items of an `iterable` from left to right and returns the t
 
 ```ts
 sum([1, 2, 3, 4, 5]); //=> 15
+```
+
+### `product<T>(...iterables: Iterable<T>[]): Iterable<T[]>`
+
+Cartesian product of input iterables.
+
+```ts
+product("ABCD", "xy"); //=> Ax Ay Bx By Cx Cy Dx Dy
 ```
 
 ## Reference

@@ -72,13 +72,11 @@ export function contains<T>(iterable: AnyIterable<T>, needle: T) {
 /**
  * Returns an iterable of enumeration pairs.
  */
-export async function* enumerate<T>(
+export function enumerate<T>(
   iterable: AnyIterable<T>,
   offset = 0
 ): AsyncIterable<[number, T]> {
-  let index = offset;
-
-  for await (const value of iterable) yield [index++, value];
+  return zip(range(offset), iterable);
 }
 
 /**
@@ -188,8 +186,9 @@ export async function* cycle<T>(iterable: AnyIterable<T>): AsyncIterable<T> {
 /**
  * Make an iterator that repeats `value` over and over again.
  */
-export async function* repeat<T>(value: T): AsyncIterable<T> {
-  while (true) yield value;
+export async function* repeat<T>(value: T, times?: number): AsyncIterable<T> {
+  if (times === undefined) while (true) yield value;
+  for (let i = 0; i < times; i++) yield value;
 }
 
 /**
@@ -641,4 +640,38 @@ export async function sum(
   start = 0
 ): Promise<number> {
   return reduce(iterable, (x, y) => x + y, start);
+}
+
+/**
+ * Recursively produce all produces of a list of iterators.
+ */
+async function* _product<T>(
+  pools: AnyIterator<T | typeof SENTINEL>[],
+  buffer: T[] = []
+): AsyncIterable<T[]> {
+  if (pools.length === 0) {
+    yield buffer.slice();
+    return;
+  }
+
+  const [pool, ...others] = pools;
+
+  while (true) {
+    const item = await pool.next();
+    if (item.value === SENTINEL) break;
+    buffer.push(item.value);
+    yield* _product(others, buffer);
+    buffer.pop();
+  }
+}
+
+/**
+ * Cartesian product of input iterables.
+ */
+export async function* product<T extends any[]>(
+  ...iterables: AnyTupleIterable<T>
+): AsyncIterable<T> {
+  const pools = iterables.map(x => iter(cycle(chain(x, repeat(SENTINEL, 1)))));
+
+  yield* _product(pools) as AsyncIterable<T>;
 }
