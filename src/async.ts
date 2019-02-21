@@ -72,10 +72,7 @@ export function contains<T>(iterable: AnyIterable<T>, needle: T) {
 /**
  * Returns an iterable of enumeration pairs.
  */
-export function enumerate<T>(
-  iterable: AnyIterable<T>,
-  offset = 0
-): AsyncIterable<[number, T]> {
+export function enumerate<T>(iterable: AnyIterable<T>, offset = 0) {
   return zip(range(offset), iterable);
 }
 
@@ -113,7 +110,7 @@ export function iter<T>(iterable: AnyIterable<T>): AnyIterator<T> {
 export async function* accumulate<T>(
   iterable: AnyIterable<T>,
   func: AnyReducer<T, T>
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   const it = iter(iterable);
   let item = await it.next();
   let total = item.value;
@@ -133,7 +130,7 @@ export async function* accumulate<T>(
  */
 export async function* flatten<T>(
   iterable: AnyIterable<AnyIterable<T>>
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   for await (const it of iterable) {
     for await (const item of it) {
       yield item;
@@ -148,7 +145,7 @@ export async function* flatten<T>(
  */
 export function chain<T>(
   ...iterables: Array<AnyIterable<T>>
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   return flatten(iterables);
 }
 
@@ -159,7 +156,7 @@ export async function* range(
   start = 0,
   stop = Infinity,
   step = 1
-): AsyncIterable<number> {
+): AsyncIterableIterator<number> {
   for (let i = start; i < stop; i += step) yield i;
 }
 
@@ -168,7 +165,9 @@ export async function* range(
  * each. When the iterable is exhausted, return elements from the saved copy.
  * Repeats indefinitely.
  */
-export async function* cycle<T>(iterable: AnyIterable<T>): AsyncIterable<T> {
+export async function* cycle<T>(
+  iterable: AnyIterable<T>
+): AsyncIterableIterator<T> {
   const saved: T[] = [];
 
   for await (const item of iterable) {
@@ -186,7 +185,10 @@ export async function* cycle<T>(iterable: AnyIterable<T>): AsyncIterable<T> {
 /**
  * Make an iterator that repeats `value` over and over again.
  */
-export async function* repeat<T>(value: T, times?: number): AsyncIterable<T> {
+export async function* repeat<T>(
+  value: T,
+  times?: number
+): AsyncIterableIterator<T> {
   if (times === undefined) while (true) yield value;
   for (let i = 0; i < times; i++) yield value;
 }
@@ -236,7 +238,7 @@ export async function* takeWhile<T>(
 export async function* groupBy<T, U>(
   iterable: AnyIterable<T>,
   func: AnyFunc<T, U>
-): AsyncIterable<[U, AsyncIterable<T>]> {
+) {
   const it = iter(iterable);
   let item = await it.next();
 
@@ -245,7 +247,7 @@ export async function* groupBy<T, U>(
   let key = await func(item.value);
   let currKey: U | typeof SENTINEL = key;
 
-  async function* grouper(): AsyncIterable<T> {
+  async function* grouper() {
     do {
       yield item.value;
 
@@ -262,7 +264,7 @@ export async function* groupBy<T, U>(
   }
 
   do {
-    yield [key, grouper()];
+    yield [key, grouper()] as [U, AsyncIterableIterator<T>];
 
     // Skip over any remaining values not pulled from `grouper`.
     while (key === currKey) {
@@ -333,7 +335,7 @@ export async function reduce<T, U>(
 export async function* map<T, U>(
   iterable: AnyIterable<T>,
   func: AnyFunc<T, U>
-): AsyncIterable<U> {
+): AsyncIterableIterator<U> {
   for await (const item of iterable) yield func(item);
 }
 
@@ -347,7 +349,7 @@ export async function* map<T, U>(
 export async function* spreadmap<T extends any[], U>(
   iterable: AnyIterable<T>,
   func: (...args: T) => U | Promise<U>
-): AsyncIterable<U> {
+): AsyncIterableIterator<U> {
   for await (const item of iterable) yield func(...item);
 }
 
@@ -357,7 +359,7 @@ export async function* spreadmap<T extends any[], U>(
 export async function* filter<T>(
   iterable: AnyIterable<T>,
   func: AnyPredicate<T, T> = Boolean
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   for await (const item of iterable) {
     if (await func(item)) yield item;
   }
@@ -371,7 +373,7 @@ export async function* filter<T>(
  */
 export async function* zip<T extends any[]>(
   ...iterables: AnyTupleIterable<T>
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   const iters = iterables.map(x => iter(x));
 
   while (iters.length) {
@@ -395,7 +397,7 @@ export async function* zip<T extends any[]>(
  */
 export async function* zipLongest<T extends any[]>(
   ...iterables: AnyTupleIterable<T>
-): AsyncIterable<Partial<T>> {
+): AsyncIterableIterator<Partial<T>> {
   const iters: Array<AnyIterator<T | undefined>> = iterables.map(x => iter(x));
   const noop = iter(repeat(undefined));
   let counter = iters.length;
@@ -424,14 +426,12 @@ export async function* zipLongest<T extends any[]>(
 /**
  * Return two independent iterables from a single iterable.
  */
-export function tee<T>(
-  iterable: AnyIterable<T>
-): [AsyncIterable<T>, AsyncIterable<T>] {
+export function tee<T>(iterable: AnyIterable<T>) {
   const queue: T[] = [];
   const it = iter(iterable);
   let owner: -1 | 0 | 1;
 
-  async function* gen(id: 0 | 1): AsyncIterable<T> {
+  async function* gen(id: 0 | 1): AsyncIterableIterator<T> {
     while (true) {
       while (queue.length) {
         yield queue.shift()!;
@@ -455,7 +455,10 @@ export function tee<T>(
     }
   }
 
-  return [gen(0), gen(1)];
+  return [gen(0), gen(1)] as [
+    AsyncIterableIterator<T>,
+    AsyncIterableIterator<T>
+  ];
 }
 
 /**
@@ -464,7 +467,7 @@ export function tee<T>(
 export async function* chunk<T>(
   iterable: AnyIterable<T>,
   size: number
-): AsyncIterable<T[]> {
+): AsyncIterableIterator<T[]> {
   let chunk: T[] = [];
 
   for await (const item of iterable) {
@@ -486,7 +489,7 @@ export async function* chunk<T>(
  */
 export async function* pairwise<T>(
   iterable: AnyIterable<T>
-): AsyncIterable<[T, T]> {
+): AsyncIterableIterator<[T, T]> {
   const it = iter(iterable);
   let item = await it.next();
   let prev = item.value;
@@ -507,7 +510,7 @@ export async function* pairwise<T>(
 export async function* compress<T>(
   iterable: AnyIterable<T>,
   selectors: AnyIterable<boolean>
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   for await (const [item, valid] of zip(iterable, selectors)) {
     if (valid) yield item;
   }
@@ -648,7 +651,7 @@ export async function sum(
 async function* _product<T>(
   pools: AnyIterator<T | typeof SENTINEL>[],
   buffer: T[] = []
-): AsyncIterable<T[]> {
+): AsyncIterableIterator<T[]> {
   if (pools.length === 0) {
     yield buffer.slice();
     return;
@@ -670,8 +673,8 @@ async function* _product<T>(
  */
 export async function* product<T extends any[]>(
   ...iterables: AnyTupleIterable<T>
-): AsyncIterable<T> {
+): AsyncIterableIterator<T> {
   const pools = iterables.map(x => iter(cycle(chain(x, repeat(SENTINEL, 1)))));
 
-  yield* _product(pools) as AsyncIterable<T>;
+  yield* _product(pools) as AsyncIterableIterator<T>;
 }

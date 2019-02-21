@@ -60,10 +60,7 @@ export function contains<T>(iterable: Iterable<T>, needle: T) {
 /**
  * Returns an iterable of enumeration pairs.
  */
-export function enumerate<T>(
-  iterable: Iterable<T>,
-  offset = 0
-): Iterable<[number, T]> {
+export function enumerate<T>(iterable: Iterable<T>, offset = 0) {
   return zip(range(offset), iterable);
 }
 
@@ -94,7 +91,7 @@ export function next<T, U>(iterator: Iterator<T>, defaultValue?: U): T | U {
 export function* accumulate<T>(
   iterable: Iterable<T>,
   func: Reducer<T, T>
-): Iterable<T> {
+): IterableIterator<T> {
   const it = iter(iterable);
   let item = it.next();
   let total = item.value;
@@ -112,7 +109,9 @@ export function* accumulate<T>(
 /**
  * Return an iterator flattening one level of nesting in an iterable of iterables.
  */
-export function* flatten<T>(iterable: Iterable<Iterable<T>>): Iterable<T> {
+export function* flatten<T>(
+  iterable: Iterable<Iterable<T>>
+): IterableIterator<T> {
   for (const it of iterable) {
     for (const item of it) {
       yield item;
@@ -125,14 +124,20 @@ export function* flatten<T>(iterable: Iterable<Iterable<T>>): Iterable<T> {
  * exhausted, then proceeds to the next iterable, until all of the iterables are
  * exhausted. Used for treating consecutive sequences as a single sequence.
  */
-export function chain<T>(...iterables: Array<Iterable<T>>): Iterable<T> {
+export function chain<T>(
+  ...iterables: Array<Iterable<T>>
+): IterableIterator<T> {
   return flatten(iterables);
 }
 
 /**
  * This is a versatile function to create lists containing arithmetic progressions.
  */
-export function* range(start = 0, stop = Infinity, step = 1): Iterable<number> {
+export function* range(
+  start = 0,
+  stop = Infinity,
+  step = 1
+): IterableIterator<number> {
   for (let i = start; i < stop; i += step) yield i;
 }
 
@@ -141,7 +146,7 @@ export function* range(start = 0, stop = Infinity, step = 1): Iterable<number> {
  * each. When the iterable is exhausted, return elements from the saved copy.
  * Repeats indefinitely.
  */
-export function* cycle<T>(iterable: Iterable<T>): Iterable<T> {
+export function* cycle<T>(iterable: Iterable<T>): IterableIterator<T> {
   const saved: T[] = [];
 
   for (const item of iterable) {
@@ -159,7 +164,7 @@ export function* cycle<T>(iterable: Iterable<T>): Iterable<T> {
 /**
  * Make an iterator that repeats `value` over and over again.
  */
-export function* repeat<T>(value: T, times?: number): Iterable<T> {
+export function* repeat<T>(value: T, times?: number): IterableIterator<T> {
   if (times === undefined) while (true) yield value;
   for (let i = 0; i < times; i++) yield value;
 }
@@ -200,10 +205,7 @@ export function* takeWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>) {
  * Make an iterator that returns consecutive keys and groups from the `iterable`.
  * The `func` is a function computing a key value for each element.
  */
-export function* groupBy<T, U>(
-  iterable: Iterable<T>,
-  func: Func<T, U>
-): Iterable<[U, Iterable<T>]> {
+export function* groupBy<T, U>(iterable: Iterable<T>, func: Func<T, U>) {
   const it = iter(iterable);
   let item = it.next();
 
@@ -212,7 +214,7 @@ export function* groupBy<T, U>(
   let key = func(item.value);
   let currKey: U | typeof SENTINEL = key;
 
-  function* grouper(): Iterable<T> {
+  function* grouper() {
     do {
       yield item.value;
 
@@ -229,7 +231,7 @@ export function* groupBy<T, U>(
   }
 
   do {
-    yield [key, grouper()];
+    yield [key, grouper()] as [U, IterableIterator<T>];
 
     // Skip over any remaining values not pulled from `grouper`.
     while (key === currKey) {
@@ -297,7 +299,7 @@ export function reduce<T, U>(
 export function* map<T, U>(
   iterable: Iterable<T>,
   func: Func<T, U>
-): Iterable<U> {
+): IterableIterator<U> {
   for (const item of iterable) yield func(item);
 }
 
@@ -311,7 +313,7 @@ export function* map<T, U>(
 export function* spreadmap<T extends any[], U>(
   iterable: Iterable<T>,
   func: (...args: T) => U
-): Iterable<U> {
+): IterableIterator<U> {
   for (const item of iterable) yield func(...item);
 }
 
@@ -321,7 +323,7 @@ export function* spreadmap<T extends any[], U>(
 export function* filter<T, U extends T>(
   iterable: Iterable<T>,
   func: Predicate<T, U> = Boolean
-): Iterable<U> {
+): IterableIterator<U> {
   for (const item of iterable) {
     if (func(item)) yield item;
   }
@@ -335,7 +337,7 @@ export function* filter<T, U extends T>(
  */
 export function* zip<T extends any[]>(
   ...iterables: TupleIterable<T>
-): Iterable<T> {
+): IterableIterator<T> {
   const iters = iterables.map(x => iter(x));
 
   while (iters.length) {
@@ -358,7 +360,7 @@ export function* zip<T extends any[]>(
  */
 export function* zipLongest<T extends any[]>(
   ...iterables: TupleIterable<T>
-): Iterable<Partial<T>> {
+): IterableIterator<Partial<T>> {
   const iters: Array<Iterator<T | undefined>> = iterables.map(x => iter(x));
   const noop = iter(repeat(undefined));
   let counter = iters.length;
@@ -386,12 +388,12 @@ export function* zipLongest<T extends any[]>(
 /**
  * Return two independent iterables from a single iterable.
  */
-export function tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>] {
+export function tee<T>(iterable: Iterable<T>) {
   const queue: T[] = [];
   const it = iter(iterable);
   let owner: -1 | 0 | 1;
 
-  function* gen(id: 0 | 1): Iterable<T> {
+  function* gen(id: 0 | 1): IterableIterator<T> {
     while (true) {
       while (queue.length) {
         yield queue.shift()!;
@@ -415,13 +417,16 @@ export function tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>] {
     }
   }
 
-  return [gen(0), gen(1)];
+  return [gen(0), gen(1)] as [IterableIterator<T>, IterableIterator<T>];
 }
 
 /**
  * Break iterable into lists of length `size`.
  */
-export function* chunk<T>(iterable: Iterable<T>, size: number): Iterable<T[]> {
+export function* chunk<T>(
+  iterable: Iterable<T>,
+  size: number
+): IterableIterator<T[]> {
   let chunk: T[] = [];
 
   for (const item of iterable) {
@@ -441,7 +446,7 @@ export function* chunk<T>(iterable: Iterable<T>, size: number): Iterable<T[]> {
  * the input iterable has a finite number of items `n`, the outputted iterable
  * will have `n - 1` items.
  */
-export function* pairwise<T>(iterable: Iterable<T>): Iterable<[T, T]> {
+export function* pairwise<T>(iterable: Iterable<T>): IterableIterator<[T, T]> {
   const it = iter(iterable);
   let item = it.next();
   let prev = item.value;
@@ -462,7 +467,7 @@ export function* pairwise<T>(iterable: Iterable<T>): Iterable<[T, T]> {
 export function* compress<T>(
   iterable: Iterable<T>,
   selectors: Iterable<boolean>
-): Iterable<T> {
+): IterableIterator<T> {
   for (const [item, valid] of zip(iterable, selectors)) {
     if (valid) yield item;
   }
@@ -591,7 +596,7 @@ export function sum(iterable: Iterable<number>, start = 0): number {
 function* _product<T>(
   pools: Iterator<T | typeof SENTINEL>[],
   buffer: T[] = []
-): Iterable<T[]> {
+): IterableIterator<T[]> {
   if (pools.length === 0) {
     yield buffer.slice();
     return;
@@ -613,8 +618,8 @@ function* _product<T>(
  */
 export function* product<T extends any[]>(
   ...iterables: TupleIterable<T>
-): Iterable<T> {
+): IterableIterator<T> {
   const pools = iterables.map(x => iter(cycle(chain(x, repeat(SENTINEL, 1)))));
 
-  yield* _product(pools) as Iterable<T>;
+  yield* _product(pools) as IterableIterator<T>;
 }

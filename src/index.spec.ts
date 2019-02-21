@@ -186,7 +186,7 @@ describe("iterative", () => {
     it("should consume partial groups", () => {
       const iterable = iter.groupBy([1, 2, 3, 4, 5], x => Math.floor(x / 2));
       const result = Array.from(iterable, ([index, iterable]) => {
-        return [index, iter.iter(iterable).next().value];
+        return [index, iter.next(iterable)];
       });
 
       expect(result).toEqual([[0, 1], [1, 2], [2, 4]]);
