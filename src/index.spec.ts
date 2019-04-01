@@ -1,4 +1,5 @@
 import * as iter from "./index";
+import { expectType, TypeEqual } from "ts-expect";
 
 describe("iterative", () => {
   describe("all", () => {
@@ -366,6 +367,13 @@ describe("iterative", () => {
     it("should zip until the longest value", () => {
       const iterable = iter.zipLongest(iter.range(0, 2), iter.range(0, 5));
 
+      expectType<
+        TypeEqual<
+          IterableIterator<[number | undefined, number | undefined]>,
+          typeof iterable
+        >
+      >(true);
+
       expect(Array.from(iterable)).toEqual([
         [0, 0],
         [1, 1],
@@ -379,6 +387,31 @@ describe("iterative", () => {
       const iterable = iter.zipLongest();
 
       expect(Array.from(iterable)).toEqual([]);
+    });
+  });
+
+  describe("zipWithValue", () => {
+    it("should zip until the longest value", () => {
+      const iterable = iter.zipWithValue(
+        "test",
+        iter.range(0, 2),
+        iter.range(0, 5)
+      );
+
+      expectType<
+        TypeEqual<
+          IterableIterator<[number | string, number | string]>,
+          typeof iterable
+        >
+      >(true);
+
+      expect(Array.from(iterable)).toEqual([
+        [0, 0],
+        [1, 1],
+        ["test", 2],
+        ["test", 3],
+        ["test", 4]
+      ]);
     });
   });
 

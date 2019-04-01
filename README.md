@@ -173,12 +173,20 @@ Returns an iterator of tuples, where the `i`-th tuple contains the `i`-th elemen
 zip([1, 2, 3], ["a", "b", "c"]); //=> [[1, 'a'], [2, 'b'], [3, 'c']]
 ```
 
-### `zipLongest<T>(...iterables: Iterable<T>[]): Iterable<T[]>`
+### `zipLongest<T>(...iterables: Iterable<T>[]): Iterable<(T | undefined)[]>`
 
 Make an iterator that aggregates elements from each of the iterables. If the iterables are of uneven length, missing values are `undefined`. Iteration continues until the longest iterable is exhausted.
 
 ```ts
 zipLongest([1, 2], ["a", "b", "c", "d"]); //=> [[1, 'a'], [2, 'b'], [undefined, 'c'], [undefined, 'd']]
+```
+
+### `zipWithValue<T, U>(fillValue: U, iterables: Iterable<T>[]): Iterable<(T | U)[]>`
+
+Make an iterator that aggregates elements from each of the iterables. If the iterables are of uneven length, missing values are `fillValue`. Iteration continues until the longest iterable is exhausted.
+
+```ts
+zipWithValue("example", [1, 2], ["a", "b", "c", "d"]); //=> [[1, 'a'], [2, 'b'], ['example', 'c'], ['example', 'd']]
 ```
 
 ### `tee<T>(iterable: Iterable<T>): [Iterable<T>, Iterable<T>]`

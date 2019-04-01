@@ -395,15 +395,25 @@ export async function* zip<T extends any[]>(
  * iterables are of uneven length, missing values are `undefined`. Iteration
  * continues until the longest iterable is exhausted.
  */
-export async function* zipLongest<T extends any[]>(
+export function zipLongest<T extends any[]>(...iterables: AnyTupleIterable<T>) {
+  return zipWithValue<T, undefined>(undefined, ...(iterables as any));
+}
+
+/**
+ * Make an iterator that aggregates elements from each of the iterables. If the
+ * iterables are of uneven length, missing values are `fillValue`. Iteration
+ * continues until the longest iterable is exhausted.
+ */
+export async function* zipWithValue<T extends any[], U>(
+  fillValue: U,
   ...iterables: AnyTupleIterable<T>
-): AsyncIterableIterator<Partial<T>> {
-  const iters: Array<AnyIterator<T | undefined>> = iterables.map(x => iter(x));
-  const noop = iter(repeat(undefined));
+): AsyncIterableIterator<{ [K in keyof T]: T[K] | U }> {
+  const iters = iterables.map<AnyIterator<T | U>>(x => iter(x));
+  const noop = iter(repeat(fillValue));
   let counter = iters.length;
 
   while (true) {
-    const result = Array(iters.length) as Partial<T>;
+    const result = Array(iters.length) as { [K in keyof T]: T[K] | U };
     const items = await Promise.all(iters.map(x => x.next()));
 
     for (let i = 0; i < items.length; i++) {
@@ -412,6 +422,7 @@ export async function* zipLongest<T extends any[]>(
       if (item.done) {
         counter -= 1;
         iters[i] = noop;
+        result[i] = fillValue;
       } else {
         result[i] = item.value;
       }

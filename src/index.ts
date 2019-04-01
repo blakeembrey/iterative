@@ -358,15 +358,25 @@ export function* zip<T extends any[]>(
  * iterables are of uneven length, missing values are `undefined`. Iteration
  * continues until the longest iterable is exhausted.
  */
-export function* zipLongest<T extends any[]>(
+export function zipLongest<T extends any[]>(...iterables: TupleIterable<T>) {
+  return zipWithValue<T, undefined>(undefined, ...(iterables as any));
+}
+
+/**
+ * Make an iterator that aggregates elements from each of the iterables. If the
+ * iterables are of uneven length, missing values are `fillValue`. Iteration
+ * continues until the longest iterable is exhausted.
+ */
+export function* zipWithValue<T extends any[], U>(
+  fillValue: U,
   ...iterables: TupleIterable<T>
-): IterableIterator<Partial<T>> {
-  const iters: Array<Iterator<T | undefined>> = iterables.map(x => iter(x));
-  const noop = iter(repeat(undefined));
+): IterableIterator<{ [K in keyof T]: T[K] | U }> {
+  const iters = iterables.map<Iterator<T | U>>(x => iter(x));
+  const noop = iter(repeat(fillValue));
   let counter = iters.length;
 
   while (true) {
-    const result = Array(iters.length) as Partial<T>;
+    const result = Array(iters.length) as { [K in keyof T]: T[K] | U };
 
     for (let i = 0; i < iters.length; i++) {
       const item = iters[i].next();
@@ -374,6 +384,7 @@ export function* zipLongest<T extends any[]>(
       if (item.done) {
         counter -= 1;
         iters[i] = noop;
+        result[i] = fillValue;
       } else {
         result[i] = item.value;
       }
