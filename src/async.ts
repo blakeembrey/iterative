@@ -101,7 +101,7 @@ export async function next<T, U>(
  */
 export function iter<T>(iterable: AnyIterable<T>): AnyIterator<T> {
   return ((iterable as AsyncIterable<T>)[Symbol.asyncIterator] ||
-    (iterable as Iterable<T>)[Symbol.iterator])();
+    (iterable as Iterable<T>)[Symbol.iterator]).call(iterable);
 }
 
 /**
