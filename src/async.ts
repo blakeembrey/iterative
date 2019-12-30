@@ -38,7 +38,7 @@ export type AnyFunc<T, U> = (item: T) => U | Promise<U>;
  * Returns `true` when all values in iterable are truthy.
  */
 export async function all<T, U extends T>(
-  iterable: AsyncIterable<T>,
+  iterable: AnyIterable<T>,
   predicate: AnyPredicate<T, U> = Boolean
 ) {
   for await (const item of iterable) {
@@ -100,8 +100,11 @@ export async function next<T, U>(
  * Returns an iterator object for the given `iterable`.
  */
 export function iter<T>(iterable: AnyIterable<T>): AnyIterator<T> {
-  return ((iterable as AsyncIterable<T>)[Symbol.asyncIterator] ||
-    (iterable as Iterable<T>)[Symbol.iterator])();
+  if ((iterable as AsyncIterable<T>)[Symbol.asyncIterator]) {
+    return (iterable as AsyncIterable<T>)[Symbol.asyncIterator]();
+  }
+
+  return (iterable as Iterable<T>)[Symbol.iterator]();
 }
 
 /**
@@ -306,7 +309,7 @@ export async function* slice<T>(
 export function reduce<T>(
   iterable: AnyIterable<T>,
   reducer: AnyReducer<T, T>
-): T;
+): Promise<T>;
 export function reduce<T, U>(
   iterable: AnyIterable<T>,
   reducer: AnyReducer<T, U>,
@@ -650,7 +653,7 @@ export async function max<T extends number>(
  * the total.
  */
 export async function sum(
-  iterable: Iterable<number>,
+  iterable: AnyIterable<number>,
   start = 0
 ): Promise<number> {
   return reduce(iterable, (x, y) => x + y, start);
