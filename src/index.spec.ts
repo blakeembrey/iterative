@@ -532,4 +532,15 @@ describe("iterative", () => {
       expect(iter.list(iterable)).toEqual(result);
     });
   });
+
+  describe("iterable", () => {
+    it("should convert an iterator to iterable", () => {
+      const iterator = iter.iter([1, 2, 3]);
+      const iterable = iter.iterable(iterator);
+
+      iter.next(iterator); // Discard first value.
+
+      expect(iter.list(iterable)).toEqual([2, 3]);
+    });
+  });
 });

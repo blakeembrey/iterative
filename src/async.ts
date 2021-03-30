@@ -108,6 +108,17 @@ export function iter<T>(iterable: AnyIterable<T>): AnyIterator<T> {
 }
 
 /**
+ * Convert an iterator object back into an iterator.
+ */
+export async function* iterable<T>(iterator: AnyIterator<T>): AsyncIterable<T> {
+  while (true) {
+    const item = await iterator.next();
+    if (item.done) return;
+    yield item.value;
+  }
+}
+
+/**
  * Make an iterator that returns accumulated results of binary functions.
  */
 export async function* accumulate<T>(

@@ -65,13 +65,6 @@ export function enumerate<T>(iterable: Iterable<T>, offset = 0) {
 }
 
 /**
- * Returns an iterator object for the given `iterable`.
- */
-export function iter<T>(iterable: Iterable<T>): Iterator<T> {
-  return iterable[Symbol.iterator]();
-}
-
-/**
  * Get next iterator value, throw when `done`.
  */
 export function next<T>(iterator: Iterator<T>): T;
@@ -83,6 +76,24 @@ export function next<T, U>(iterator: Iterator<T>, defaultValue?: U): T | U {
     return defaultValue as U;
   }
   return item.value;
+}
+
+/**
+ * Returns an iterator object for the given `iterable`.
+ */
+export function iter<T>(iterable: Iterable<T>): Iterator<T> {
+  return iterable[Symbol.iterator]();
+}
+
+/**
+ * Convert an iterator object back into an iterator.
+ */
+export function* iterable<T>(iterator: Iterator<T>): Iterable<T> {
+  while (true) {
+    const item = iterator.next();
+    if (item.done) return;
+    yield item.value;
+  }
 }
 
 /**
