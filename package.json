@@ -1,25 +1,35 @@
 {
   "name": "iterative",
   "version": "1.9.2",
-  "description": "Functions for working with iterators in JavaScript, with TypeScript",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/"
-  ],
-  "scripts": {
-    "prettier": "prettier --write",
-    "format": "npm run prettier -- \"{.,src/**}/*.{js,ts,json,md,yml,css}\"",
-    "lint": "tslint \"src/**/*.ts\" --project tsconfig.json",
-    "build": "rimraf dist/ && tsc",
-    "specs": "jest --coverage",
-    "test": "npm run lint && npm run build && npm run specs",
-    "prepare": "npm run build"
+  "publishConfig": {
+    "access": "public"
   },
+  "description": "Functions for working with iterators in JavaScript, with TypeScript",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/blakeembrey/iterative.git"
   },
+  "author": {
+    "name": "Blake Embrey",
+    "email": "hello@blakeembrey.com",
+    "url": "http://blakeembrey.me"
+  },
+  "homepage": "https://github.com/blakeembrey/iterative",
+  "bugs": {
+    "url": "https://github.com/blakeembrey/iterative/issues"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "format": "ts-scripts format",
+    "lint": "ts-scripts lint",
+    "prepare": "ts-scripts install && ts-scripts build",
+    "specs": "ts-scripts specs",
+    "test": "ts-scripts test"
+  },
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "iter",
     "iterable",
@@ -30,51 +40,12 @@
     "function",
     "util"
   ],
-  "author": {
-    "name": "Blake Embrey",
-    "email": "hello@blakeembrey.com",
-    "url": "http://blakeembrey.me"
-  },
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/blakeembrey/iterative/issues"
-  },
-  "homepage": "https://github.com/blakeembrey/iterative",
-  "jest": {
-    "roots": [
-      "<rootDir>/src/"
-    ],
-    "transform": {
-      "\\.tsx?$": "ts-jest"
-    }
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,ts,json,md,yml,css}": [
-      "npm run prettier",
-      "git add"
-    ]
-  },
-  "publishConfig": {
-    "access": "public"
-  },
   "devDependencies": {
+    "@borderless/ts-scripts": "^0.3.0",
     "@types/jest": "^24.0.11",
     "@types/node": "^13.1.2",
-    "husky": "^3.1.0",
-    "jest": "^24.0.0",
-    "lint-staged": "^9.5.0",
-    "prettier": "^1.16.1",
-    "rimraf": "^3.0.0",
     "ts-expect": "^1.1.0",
-    "ts-jest": "^24.0.1",
-    "tslint": "^5.0.0",
-    "tslint-config-prettier": "^1.17.0",
-    "tslint-config-standard": "^9.0.0",
-    "typescript": "^3.4.1"
-  }
+    "typescript": "^4.2.4"
+  },
+  "types": "dist/index.d.ts"
 }

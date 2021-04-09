@@ -4,13 +4,13 @@ import { expectType, TypeEqual } from "ts-expect";
 describe("iterative", () => {
   describe("all", () => {
     it("should return true when all match", async () => {
-      const result = await iter.all([1, 2, 3], x => true);
+      const result = await iter.all([1, 2, 3], (x) => true);
 
       expect(result).toBe(true);
     });
 
     it("should return false when a value does not match", async () => {
-      const result = await iter.all([1, 2, 3], x => x % 2 === 1);
+      const result = await iter.all([1, 2, 3], (x) => x % 2 === 1);
 
       expect(result).toBe(false);
     });
@@ -18,13 +18,13 @@ describe("iterative", () => {
 
   describe("any", () => {
     it("should return true when any match", async () => {
-      const result = await iter.any([1, 2, 3], x => x === 3);
+      const result = await iter.any([1, 2, 3], (x) => x === 3);
 
       expect(result).toBe(true);
     });
 
     it("should return false when none match", async () => {
-      const result = await iter.any([1, 2, 3], x => x === 5);
+      const result = await iter.any([1, 2, 3], (x) => x === 5);
 
       expect(result).toBe(false);
     });
@@ -75,7 +75,7 @@ describe("iterative", () => {
   describe("flatten", () => {
     it("should flatten an iterable of iterables", async () => {
       const iterable = iter.slice(
-        iter.flatten(iter.map(iter.range(), stop => iter.range(0, stop))),
+        iter.flatten(iter.map(iter.range(), (stop) => iter.range(0, stop))),
         10,
         20
       );
@@ -94,7 +94,7 @@ describe("iterative", () => {
     it("should allow flat map", async () => {
       const iterable = iter.chain(
         ...(await iter.list(
-          iter.map(iter.range(0, 5), stop => iter.range(0, stop))
+          iter.map(iter.range(0, 5), (stop) => iter.range(0, stop))
         ))
       );
 
@@ -119,7 +119,7 @@ describe("iterative", () => {
   describe("dropWhile", () => {
     it("should drop values until predicate becomes falsy", async () => {
       const iterable = iter.slice(
-        iter.dropWhile(iter.range(), x => x < 10),
+        iter.dropWhile(iter.range(), (x) => x < 10),
         0,
         3
       );
@@ -129,7 +129,7 @@ describe("iterative", () => {
 
     it("should drop nothing if immediately returns false", async () => {
       const iterable = iter.slice(
-        iter.dropWhile(iter.range(), x => false),
+        iter.dropWhile(iter.range(), (x) => false),
         0,
         3
       );
@@ -140,7 +140,7 @@ describe("iterative", () => {
 
   describe("takeWhile", () => {
     it("take while predicate is truthy", async () => {
-      const iterable = iter.takeWhile(iter.range(), x => x < 5);
+      const iterable = iter.takeWhile(iter.range(), (x) => x < 5);
 
       expect(await iter.list(iterable)).toEqual([0, 1, 2, 3, 4]);
     });
@@ -170,29 +170,37 @@ describe("iterative", () => {
 
   describe("groupBy", () => {
     it("should group by sequentially", async () => {
-      const iterable = iter.groupBy([1, 2, 3, 4, 5], x => Math.floor(x / 2));
+      const iterable = iter.groupBy([1, 2, 3, 4, 5], (x) => Math.floor(x / 2));
       const result = await iter.list(iterable, async ([index, iterable]) => [
         index,
-        await iter.list(iterable)
+        await iter.list(iterable),
       ]);
 
-      expect(result).toEqual([[0, [1]], [1, [2, 3]], [2, [4, 5]]]);
+      expect(result).toEqual([
+        [0, [1]],
+        [1, [2, 3]],
+        [2, [4, 5]],
+      ]);
     });
 
     it("should skip over groups when not consumed", async () => {
-      const iterable = iter.groupBy([1, 2, 3, 4, 5], x => Math.floor(x / 2));
+      const iterable = iter.groupBy([1, 2, 3, 4, 5], (x) => Math.floor(x / 2));
       const result = await iter.list(iterable, ([index]) => index);
 
       expect(result).toEqual([0, 1, 2]);
     });
 
     it("should consume partial groups", async () => {
-      const iterable = iter.groupBy([1, 2, 3, 4, 5], x => Math.floor(x / 2));
+      const iterable = iter.groupBy([1, 2, 3, 4, 5], (x) => Math.floor(x / 2));
       const result = await iter.list(iterable, async ([index, iterable]) => {
         return [index, await iter.next(iterable)];
       });
 
-      expect(result).toEqual([[0, 1], [1, 2], [2, 4]]);
+      expect(result).toEqual([
+        [0, 1],
+        [1, 2],
+        [2, 4],
+      ]);
     });
   });
 
@@ -226,7 +234,11 @@ describe("iterative", () => {
 
   describe("map", () => {
     it("should map iterator values", async () => {
-      const iterable = iter.slice(iter.map(iter.range(), x => x * x), 0, 5);
+      const iterable = iter.slice(
+        iter.map(iter.range(), (x) => x * x),
+        0,
+        5
+      );
 
       expect(await iter.list(iterable)).toEqual([0, 1, 4, 9, 16]);
     });
@@ -247,7 +259,7 @@ describe("iterative", () => {
   describe("filter", () => {
     it("should filter values from iterator", async () => {
       const iterable = iter.slice(
-        iter.filter(iter.range(), x => x % 2 === 0),
+        iter.filter(iter.range(), (x) => x % 2 === 0),
         0,
         5
       );
@@ -267,7 +279,7 @@ describe("iterative", () => {
 
   describe("tee", () => {
     it("should return two independent iterables from one", async () => {
-      const iterable = iter.map([1, 2, 3], x => x * 2);
+      const iterable = iter.map([1, 2, 3], (x) => x * 2);
       const [a, b] = iter.tee(iterable);
 
       expect(await iter.list(a)).toEqual([2, 4, 6]);
@@ -283,7 +295,7 @@ describe("iterative", () => {
       expect([
         (await b.next()).value,
         (await b.next()).value,
-        (await b.next()).value
+        (await b.next()).value,
       ]).toEqual([0, 1, 2]);
 
       expect([(await a.next()).value, (await a.next()).value]).toEqual([2, 3]);
@@ -305,7 +317,7 @@ describe("iterative", () => {
       let i = 0;
       const next = jest.fn(() => ({ value: i++, done: i > 10 }));
       const iterable: Iterable<number> = {
-        [Symbol.iterator]: () => ({ next })
+        [Symbol.iterator]: () => ({ next }),
       };
 
       const [a, b] = iter.tee(iterable);
@@ -322,13 +334,20 @@ describe("iterative", () => {
     it("should chunk an iterable", async () => {
       const iterable = iter.chunk([1, 2, 3, 4, 5, 6], 2);
 
-      expect(await iter.list(iterable)).toEqual([[1, 2], [3, 4], [5, 6]]);
+      expect(await iter.list(iterable)).toEqual([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
     });
 
     it("should yield last chunk when less than chunk size", async () => {
       const iterable = iter.chunk([1, 2, 3, 4, 5], 3);
 
-      expect(await iter.list(iterable)).toEqual([[1, 2, 3], [4, 5]]);
+      expect(await iter.list(iterable)).toEqual([
+        [1, 2, 3],
+        [4, 5],
+      ]);
     });
   });
 
@@ -336,7 +355,11 @@ describe("iterative", () => {
     it("should generate pairwise iterator", async () => {
       const iterable = iter.pairwise([1, 2, 3, 4]);
 
-      expect(await iter.list(iterable)).toEqual([[1, 2], [2, 3], [3, 4]]);
+      expect(await iter.list(iterable)).toEqual([
+        [1, 2],
+        [2, 3],
+        [3, 4],
+      ]);
     });
 
     it("should not generate any values when iterator too small", async () => {
@@ -350,13 +373,21 @@ describe("iterative", () => {
     it("should zip two iterables", async () => {
       const iterable = iter.zip([1, 2, 3], ["a", "b", "c"]);
 
-      expect(await iter.list(iterable)).toEqual([[1, "a"], [2, "b"], [3, "c"]]);
+      expect(await iter.list(iterable)).toEqual([
+        [1, "a"],
+        [2, "b"],
+        [3, "c"],
+      ]);
     });
 
     it("should stop when an iterable is done", async () => {
       const iterable = iter.zip([1, 2, 3], [1, 2, 3, 4, 5]);
 
-      expect(await iter.list(iterable)).toEqual([[1, 1], [2, 2], [3, 3]]);
+      expect(await iter.list(iterable)).toEqual([
+        [1, 1],
+        [2, 2],
+        [3, 3],
+      ]);
     });
 
     it("should do nothing without iterables", async () => {
@@ -382,7 +413,7 @@ describe("iterative", () => {
         [1, 1],
         [undefined, 2],
         [undefined, 3],
-        [undefined, 4]
+        [undefined, 4],
       ]);
     });
 
@@ -413,7 +444,7 @@ describe("iterative", () => {
         [1, 1],
         ["test", 2],
         ["test", 3],
-        ["test", 4]
+        ["test", 4],
       ]);
     });
   });
@@ -445,7 +476,10 @@ describe("iterative", () => {
     });
 
     it("should allow key function", async () => {
-      const list = await iter.sorted([{ x: 3 }, { x: 2 }, { x: 1 }], x => x.x);
+      const list = await iter.sorted(
+        [{ x: 3 }, { x: 2 }, { x: 1 }],
+        (x) => x.x
+      );
 
       expect(list).toEqual([{ x: 1 }, { x: 2 }, { x: 3 }]);
     });
@@ -463,7 +497,7 @@ describe("iterative", () => {
     it("should combine key and compare functions", async () => {
       const list = await iter.sorted(
         [{ x: 2 }, { x: 1 }, { x: 3 }],
-        x => x.x,
+        (x) => x.x,
         (x, y) => y - x
       );
 
@@ -495,7 +529,7 @@ describe("iterative", () => {
     it("should find minimum value by key", async () => {
       const iterable = iter.zip(iter.repeat(true), iter.range(0, 100));
 
-      expect(await iter.min(iterable, x => x[1])).toEqual([true, 0]);
+      expect(await iter.min(iterable, (x) => x[1])).toEqual([true, 0]);
     });
   });
 
@@ -507,7 +541,7 @@ describe("iterative", () => {
     it("should find maximum value by key", async () => {
       const iterable = iter.zip(iter.repeat(true), iter.range(0, 100));
 
-      expect(await iter.max(iterable, x => x[1])).toEqual([true, 99]);
+      expect(await iter.max(iterable, (x) => x[1])).toEqual([true, 99]);
     });
   });
 
@@ -533,7 +567,7 @@ describe("iterative", () => {
         ["C", "x"],
         ["C", "y"],
         ["D", "x"],
-        ["D", "y"]
+        ["D", "y"],
       ];
 
       expect(await iter.list(iterable)).toEqual(result);

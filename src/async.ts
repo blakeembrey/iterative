@@ -14,7 +14,7 @@ export type AnyIterator<T> = AsyncIterator<T> | Iterator<T>;
  * List of values to list of iterable values.
  */
 export type AnyTupleIterable<T extends any[]> = {
-  [K in keyof T]: AnyIterable<T[K]>
+  [K in keyof T]: AnyIterable<T[K]>;
 };
 
 /**
@@ -66,7 +66,7 @@ export async function any<T, U extends T>(
  * Returns `true` when any value in iterable is equal to `needle`.
  */
 export function contains<T>(iterable: AnyIterable<T>, needle: T) {
-  return any(iterable, x => x === needle);
+  return any(iterable, (x) => x === needle);
 }
 
 /**
@@ -388,11 +388,11 @@ export async function* filter<T>(
 export async function* zip<T extends any[]>(
   ...iterables: AnyTupleIterable<T>
 ): AsyncIterableIterator<T> {
-  const iters = iterables.map(x => iter(x));
+  const iters = iterables.map((x) => iter(x));
 
   while (iters.length) {
     const result = Array(iters.length) as T;
-    const items = await Promise.all(iters.map(x => x.next()));
+    const items = await Promise.all(iters.map((x) => x.next()));
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -422,13 +422,13 @@ export async function* zipWithValue<T extends any[], U>(
   fillValue: U,
   ...iterables: AnyTupleIterable<T>
 ): AsyncIterableIterator<{ [K in keyof T]: T[K] | U }> {
-  const iters = iterables.map<AnyIterator<T | U>>(x => iter(x));
+  const iters = iterables.map<AnyIterator<T | U>>((x) => iter(x));
   const noop = iter(repeat(fillValue));
   let counter = iters.length;
 
   while (true) {
     const result = Array(iters.length) as { [K in keyof T]: T[K] | U };
-    const items = await Promise.all(iters.map(x => x.next()));
+    const items = await Promise.all(iters.map((x) => x.next()));
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -579,7 +579,7 @@ export async function sorted<T, U>(
   const sortFn = reverse
     ? (a: [U | T, T], b: [U | T, T]) => -cmpFn(a[0], b[0])
     : (a: [U | T, T], b: [U | T, T]) => cmpFn(a[0], b[0]);
-  return array.sort(sortFn).map(x => x[1]);
+  return array.sort(sortFn).map((x) => x[1]);
 }
 
 /**
@@ -699,7 +699,9 @@ async function* _product<T>(
 export async function* product<T extends any[]>(
   ...iterables: AnyTupleIterable<T>
 ): AsyncIterableIterator<T> {
-  const pools = iterables.map(x => iter(cycle(chain(x, repeat(SENTINEL, 1)))));
+  const pools = iterables.map((x) =>
+    iter(cycle(chain(x, repeat(SENTINEL, 1))))
+  );
 
   yield* _product(pools) as AsyncIterableIterator<T>;
 }

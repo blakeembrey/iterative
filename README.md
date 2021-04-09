@@ -49,7 +49,11 @@ repeat(true); //=> [true, true, true, true, ...]
 Return an iterator flattening one level of nesting in an iterable of iterables.
 
 ```ts
-flatten([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); //=> [1, 2, 3, 4, 5, 6, 7, 8, 9]
+flatten([
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+]); //=> [1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
 
 ### `chain<T>(...iterables: Array<Iterable<T>>): Iterable<T>`
@@ -74,7 +78,7 @@ slice(range(), 2, 5); //=> [2, 3, 4]
 Apply function to every item of iterable and return an iterable of the results.
 
 ```ts
-map([1, 2, 3], x => x * x); //=> [1, 4, 9]
+map([1, 2, 3], (x) => x * x); //=> [1, 4, 9]
 ```
 
 ### `spreadmap<T, U>(iterable: Iterable<T>, func: (...args: T) => U): Iterable<U>`
@@ -82,7 +86,14 @@ map([1, 2, 3], x => x * x); //=> [1, 4, 9]
 Make an iterator that computes the function using arguments obtained from the iterable. Used instead of `map()` when argument parameters are already grouped in tuples from a single iterable (the data has been "pre-zipped"). The difference between `map()` and `spreadmap()` parallels the distinction between `function(a, b)` and `function(...c)`.
 
 ```ts
-map([[1, 2], [3, 4], [5, 6]], (a, b) => a + b); //=> [3, 7, 11]
+map(
+  [
+    [1, 2],
+    [3, 4],
+    [5, 6],
+  ],
+  (a, b) => a + b
+); //=> [3, 7, 11]
 ```
 
 ### `filter<T, U extends T>(iterable: Iterable<T>, func: Predicate<T, U> = Boolean): Iterable<U>`
@@ -90,7 +101,7 @@ map([[1, 2], [3, 4], [5, 6]], (a, b) => a + b); //=> [3, 7, 11]
 Construct an `iterator` from those elements of `iterable` for which `func` returns true.
 
 ```ts
-filter(range(0, 10), x => x % 2 === 0); //=> [0, 2, 4, 6, 8]
+filter(range(0, 10), (x) => x % 2 === 0); //=> [0, 2, 4, 6, 8]
 ```
 
 ### `reduce<T, U>(iterable: Iterable<T>, reducer: Reducer<T, U>, initializer?: U): U`
@@ -114,7 +125,7 @@ accumulate([1, 2, 3], (sum, val) => sum + val); //=> [1, 3, 6]
 Returns `true` when all values in iterable are truthy.
 
 ```ts
-all([1, 2, 3], x => x % 2 === 0); //=> false
+all([1, 2, 3], (x) => x % 2 === 0); //=> false
 ```
 
 ### `any<T, U extends T>(iterable: Iterable<T>, predicate: Predicate<T, U> = Boolean): boolean`
@@ -122,7 +133,7 @@ all([1, 2, 3], x => x % 2 === 0); //=> false
 Returns `true` when any value in iterable is truthy.
 
 ```ts
-any([1, 2, 3], x => x % 2 === 0); //=> true
+any([1, 2, 3], (x) => x % 2 === 0); //=> true
 ```
 
 ### `contains<T>(iterable: Iterable<T>, needle: T): boolean`
@@ -138,7 +149,7 @@ contains("test", "t"); //=> true
 Make an iterator that drops elements from the iterable as long as the predicate is true; afterwards, returns every element.
 
 ```ts
-dropWhile([1, 2, 3, 4, 5], x => x < 3); //=> [3, 4, 5]
+dropWhile([1, 2, 3, 4, 5], (x) => x < 3); //=> [3, 4, 5]
 ```
 
 ### `takeWhile<T>(iterable: Iterable<T>, predicate: Predicate<T>): Iterable<T>`
@@ -146,7 +157,7 @@ dropWhile([1, 2, 3, 4, 5], x => x < 3); //=> [3, 4, 5]
 Make an iterator that returns elements from the iterable as long as the predicate is true.
 
 ```ts
-takeWhile([1, 2, 3, 4, 5], x => x < 3); //=> [1, 2]
+takeWhile([1, 2, 3, 4, 5], (x) => x < 3); //=> [1, 2]
 ```
 
 ### `groupBy<T, U>(iterable: Iterable<T>, func: (x: T) => U): Iterable<[U, Iterable<T>]>`
@@ -154,7 +165,7 @@ takeWhile([1, 2, 3, 4, 5], x => x < 3); //=> [1, 2]
 Make an iterator that returns consecutive keys and groups from the `iterable`. The `func` is a function computing a key value for each element.
 
 ```ts
-groupBy(range(0, 6), x => Math.floor(x / 2)); //=> [[0, [0, 1]], [1, [2, 3]], [2, [4, 5]]]
+groupBy(range(0, 6), (x) => Math.floor(x / 2)); //=> [[0, [0, 1]], [1, [2, 3]], [2, [4, 5]]]
 ```
 
 ### `enumerate<T>(iterable: Iterable<T>, offset = 0): Iterable<[number, T]>`
@@ -226,7 +237,7 @@ compress([1, 2, 3, 4, 5], [true, false, true, false, true]); //=> [1, 3, 5]
 Return a sorted array from the items in iterable.
 
 ```ts
-sorted(slice(range(), 0, 10), x => x);
+sorted(slice(range(), 0, 10), (x) => x);
 ```
 
 ### `list<T>(iterable: Iterable<T>): T[]`

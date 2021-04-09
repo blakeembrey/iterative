@@ -54,7 +54,7 @@ export function any<T, U extends T>(
  * Returns `true` when any value in iterable is equal to `needle`.
  */
 export function contains<T>(iterable: Iterable<T>, needle: T) {
-  return any(iterable, x => x === needle);
+  return any(iterable, (x) => x === needle);
 }
 
 /**
@@ -349,7 +349,7 @@ export function* filter<T, U extends T>(
 export function* zip<T extends any[]>(
   ...iterables: TupleIterable<T>
 ): IterableIterator<T> {
-  const iters = iterables.map(x => iter(x));
+  const iters = iterables.map((x) => iter(x));
 
   while (iters.length) {
     const result = Array(iters.length) as T;
@@ -382,7 +382,7 @@ export function* zipWithValue<T extends any[], U>(
   fillValue: U,
   ...iterables: TupleIterable<T>
 ): IterableIterator<{ [K in keyof T]: T[K] | U }> {
-  const iters = iterables.map<Iterator<T | U>>(x => iter(x));
+  const iters = iterables.map<Iterator<T | U>>((x) => iter(x));
   const noop = iter(repeat(fillValue));
   let counter = iters.length;
 
@@ -526,11 +526,11 @@ export function sorted<T, U>(
   cmpFn: (x: U | T, y: U | T) => number = cmp,
   reverse = false
 ): Array<T> {
-  const array = list<T, [U | T, T]>(iterable, item => [keyFn(item), item]);
+  const array = list<T, [U | T, T]>(iterable, (item) => [keyFn(item), item]);
   const sortFn = reverse
     ? (a: [U | T, T], b: [U | T, T]) => -cmpFn(a[0], b[0])
     : (a: [U | T, T], b: [U | T, T]) => cmpFn(a[0], b[0]);
-  return array.sort(sortFn).map(x => x[1]);
+  return array.sort(sortFn).map((x) => x[1]);
 }
 
 /**
@@ -641,7 +641,9 @@ function* _product<T>(
 export function* product<T extends any[]>(
   ...iterables: TupleIterable<T>
 ): IterableIterator<T> {
-  const pools = iterables.map(x => iter(cycle(chain(x, repeat(SENTINEL, 1)))));
+  const pools = iterables.map((x) =>
+    iter(cycle(chain(x, repeat(SENTINEL, 1))))
+  );
 
   yield* _product(pools) as IterableIterator<T>;
 }
